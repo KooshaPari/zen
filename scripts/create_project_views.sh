@@ -22,22 +22,34 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "Locating project: $TITLE (owner=$OWNER)" >&2
 if [[ "$OWNER" == "@me" ]]; then
   OWNER_LOGIN=$(gh api user --jq .login)
 else
   OWNER_LOGIN="$OWNER"
 fi
 
-proj=$(gh project list --owner "$OWNER_LOGIN" --format json | jq -r --arg t "$TITLE" '.[]|select(.title==$t)')
-if [[ -z "$proj" ]]; then
-  echo "Project not found. Create it first (see scripts/create_projects_board.sh)." >&2
+echo "Locating project: $TITLE (owner=$OWNER_LOGIN)" >&2
+
+plist=$(gh project list --owner "$OWNER_LOGIN" --format json)
+# Normalize regardless of output shape; prefer the project with items > 0, else highest number
+proj=$(echo "$plist" | jq -r --arg t "$TITLE" '
+  (if has("projects") then .projects else . end)
+  | (if type=="array" then . else [.] end)
+  | map(select(.title==$t))
+  | sort_by([(.items.totalCount // 0), (.number // 0)])
+  | last')
+if [[ -z "$proj" || "$proj" == "null" ]]; then
+  echo "Project not found by title. Available projects:" >&2
+  echo "$plist" | jq -r 'if type=="array" then .[]|"- \(.number): \(.title)" else . end' >&2
+  echo "Create it first (scripts/create_projects_board.sh) or pass --title <name>." >&2
   exit 1
 fi
 projNum=$(echo "$proj" | jq -r '.number')
 
 echo "Fetching project fields..." >&2
-fields=$(gh project field-list "$projNum" --owner "$OWNER_LOGIN" --format json)
+fields_raw=$(gh project field-list "$projNum" --owner "$OWNER_LOGIN" --format json)
+# Normalize to array of {id,name,...}
+fields=$(echo "$fields_raw" | jq -c 'if type=="array" then . else (.fields // []) end')
 get_field_id(){ echo "$fields" | jq -r --arg n "$1" '.[]|select(.name==$n)|.id' ; }
 
 milestoneId=$(get_field_id Milestone)
@@ -45,6 +57,8 @@ labelsId=$(get_field_id Labels)
 
 if [[ -z "$milestoneId" || "$milestoneId" == "null" ]]; then
   echo "Milestone field not found on project. Ensure repo is linked and items include repo issues." >&2
+  echo "Available fields:" >&2
+  echo "$fields" | jq -r '.[]|"- \(.name) (id=\(.id))"' >&2
   exit 1
 fi
 
@@ -61,10 +75,11 @@ create_view(){
   echo "Created view: $name" >&2
 }
 
-echo "Creating saved views..." >&2
-create_view "By Milestone" "is:issue label:roadmap" "$milestoneId"
-create_view "LLM by Milestone" "is:issue label:roadmap label:llm" "$milestoneId"
-create_view "Protocol by Milestone" "is:issue label:roadmap label:protocol" "$milestoneId"
-create_view "Infra by Milestone" "is:issue label:roadmap label:infra" "$milestoneId"
-
-echo "Done. Open the project to see saved views." >&2
+echo "NOTE: GitHub API currently does not support programmatic creation of saved views for Projects (beta) via GraphQL." >&2
+echo "Open the project and create views manually with these settings:" >&2
+echo "- By Milestone: filter=\"is:issue label:roadmap\"; Group by=Milestone" >&2
+echo "- LLM by Milestone: filter=\"is:issue label:roadmap label:llm\"; Group by=Milestone" >&2
+echo "- Protocol by Milestone: filter=\"is:issue label:roadmap label:protocol\"; Group by=Milestone" >&2
+echo "- Infra by Milestone: filter=\"is:issue label:roadmap label:infra\"; Group by=Milestone" >&2
+echo "Opening project in browser..." >&2
+gh project view "$projNum" --owner "$OWNER_LOGIN" --web
