@@ -41,6 +41,8 @@ This document outlines a comprehensive plan to enhance the LLM architecture in t
   - Implemented via: `tools/universal_executor.py` (batch/async modes)
   - Deferred: dedicated LLM endpoints shown in examples (`handle_llm_task_create`, batch handlers)
 
+Tracking: https://github.com/KooshaPari/zen/issues?q=is%3Aissue+label%3Aroadmap
+
 ## Phase 1: Basic Feature Parity (Immediate Implementation)
 
 ### 1.1 Conversation Memory Integration

@@ -12,6 +12,8 @@ Implementation Status (Per Feature)
   - Nearest modules: `utils/streaming_monitor.py`, `utils/token_budget_manager.py`
 - Provenance/compliance signatures: Deferred
   - Nearest modules: `utils/audit_trail.py`, `utils/kafka_events.py`
+
+Tracking: https://github.com/KooshaPari/zen/issues?q=is%3Aissue+label%3Aroadmap
 ## Advanced Tag System & Input/Output Transformation Architecture
 
 This document outlines a complete communication protocol with comprehensive tag types, transforms, and languagization for intuitive agent orchestration.

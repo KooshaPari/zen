@@ -3241,6 +3241,8 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
         failure_threshold = int(os.getenv("TUNNEL_HEALTH_FAILURE_THRESHOLD", "3"))
         timeout = float(os.getenv("PUBLIC_HEALTH_REQUEST_TIMEOUT", "5.0"))
         path = os.getenv("PUBLIC_HEALTH_PATH", "/healthz").strip() or "/healthz"
+        summary_interval = float(os.getenv("TUNNEL_HEALTH_SUMMARY_INTERVAL", "300"))
+        next_summary = time.time() + summary_interval
 
         consecutive_failures = 0
         while True:
@@ -3266,12 +3268,42 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
                     if consecutive_failures:
                         logger.info("🩺 Tunnel health restored")
                     consecutive_failures = 0
+                    self._tunnel_success_total += 1
+                    self._tunnel_last_ok_ts = time.time()
+                    # Track last-known good host
+                    try:
+                        from urllib.parse import urlparse
+                        host = urlparse(self.tunnel_url or "").hostname
+                        if host:
+                            self._tunnel_last_good_host = host
+                    except Exception:
+                        pass
                 else:
                     consecutive_failures += 1
                     logger.debug(f"Tunnel health failure {consecutive_failures}/{failure_threshold}")
+                    self._tunnel_failures_total += 1
+                    # DNS resolution hint for diagnostics
+                    try:
+                        from urllib.parse import urlparse
+                        import socket
+                        host = urlparse(self.tunnel_url or "").hostname
+                        if host:
+                            socket.getaddrinfo(host, None)
+                    except Exception as e:
+                        logger.debug(f"DNS resolution failed for tunnel host: {e}")
                     if consecutive_failures >= failure_threshold:
                         consecutive_failures = 0
                         await self._attempt_tunnel_recovery()
+                # Periodic health summary
+                now = time.time()
+                if now >= next_summary:
+                    lg = self._tunnel_last_good_host or "?"
+                    last_ok = int(now - self._tunnel_last_ok_ts) if self._tunnel_last_ok_ts else -1
+                    logger.info(
+                        f"HEALTH tunnel host={lg} ok_total={self._tunnel_success_total} "
+                        f"fail_total={self._tunnel_failures_total} last_ok_ago_s={last_ok}"
+                    )
+                    next_summary = now + summary_interval
                 await asyncio.sleep(interval)
             except asyncio.CancelledError:
                 break
@@ -3287,6 +3319,12 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
             self._tunnel_recovery_lock = asyncio.Lock()
         async with self._tunnel_recovery_lock:
             try:
+                # Recovery cooldown
+                cooldown = float(os.getenv("TUNNEL_RECOVERY_COOLDOWN", "120"))
+                now = time.time()
+                if self._tunnel_last_recovery_ts and (now - self._tunnel_last_recovery_ts) < cooldown:
+                    logger.info("⏸️  Skipping tunnel recovery due to cooldown window")
+                    return
                 logger.warning("🔁 Attempting tunnel recovery")
                 # First, try named tunnel re-route if available
                 try:
@@ -3296,6 +3334,7 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
                         self.tunnel_url = new_url
                         logger.info(f"🔗 Updated tunnel URL to {self.tunnel_url}")
                         await self._post_tunnel_change()
+                        self._tunnel_last_recovery_ts = now
                         return
                 except Exception as e:
                     logger.debug(f"ensure_named_tunnel_route failed: {e}")
@@ -3317,10 +3356,12 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
                                 self.tunnel_url = host
                                 logger.info(f"🔗 Updated tunnel URL to {self.tunnel_url}")
                                 await self._post_tunnel_change()
+                                self._tunnel_last_recovery_ts = now
                                 return
                         except Exception:
                             pass
                 logger.warning("Tunnel recovery attempt finished; URL unchanged")
+                self._tunnel_last_recovery_ts = now
             except Exception as e:
                 logger.warning(f"Tunnel recovery failed: {e}")
 
@@ -3538,6 +3579,19 @@ def main():
                     config_data = tunnel_config.read_text()
                     import re
                     config_data = re.sub(r'service: http://localhost:\d+', f'service: http://localhost:{dev_port}', config_data)
+                    # Inject recommended settings if missing
+                    if 'originRequest:' not in config_data:
+                        config_data += f"\noriginRequest:\n  connectTimeout: 10s\n  keepAliveTimeout: 30s\n  tcpKeepAlive: 30s\n  http2Origin: true\n  noHappyEyeballs: true\n"
+                    if 'loglevel:' not in config_data:
+                        config_data += "\nloglevel: info\n"
+                    if 'transport-loglevel:' not in config_data:
+                        config_data += "transport-loglevel: warn\n"
+                    if 'retries:' not in config_data:
+                        config_data += "retries: 5\n"
+                    if 'graceful-shutdown-seconds:' not in config_data:
+                        config_data += "graceful-shutdown-seconds: 5\n"
+                    if 'edge-ip-version:' not in config_data:
+                        config_data += "edge-ip-version: auto\n"
                     tunnel_config.write_text(config_data)
 
                     # Check if tunnel is already running

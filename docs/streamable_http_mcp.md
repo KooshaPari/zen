@@ -167,6 +167,8 @@ Scope normalization:
   - `ENABLE_TUNNEL_HEALTH_MONITOR` (default: `true`): background health monitor for the public tunnel.
   - `TUNNEL_HEALTH_CHECK_INTERVAL` (default: `30`): seconds between checks.
   - `TUNNEL_HEALTH_FAILURE_THRESHOLD` (default: `3`): consecutive failures before attempting self-heal.
+  - `TUNNEL_HEALTH_SUMMARY_INTERVAL` (default: `300`): log a one-line health summary at this cadence.
+  - `TUNNEL_RECOVERY_COOLDOWN` (default: `120`): minimum seconds between recovery attempts.
   - `PUBLIC_HEALTH_PATH` (default: `/healthz`): path to probe.
   - `PUBLIC_HEALTH_REQUEST_TIMEOUT` (default: `5.0`): seconds per request.
   - Backoff tuning for initial readiness check:
@@ -174,6 +176,10 @@ Scope normalization:
     - `PUBLIC_HEALTH_INITIAL_DELAY` (default: `1.0`)
     - `PUBLIC_HEALTH_BACKOFF_FACTOR` (default: `2.0`)
     - `PUBLIC_HEALTH_MAX_DELAY` (default: `10.0`)
+  
+  Cloudflared config (dev): when running in `--dev` mode and using `~/.cloudflared/config-zen.yml`, the server injects conservative defaults if missing:
+  - `originRequest`: `connectTimeout: 10s`, `keepAliveTimeout: 30s`, `tcpKeepAlive: 30s`, `http2Origin: true`, `noHappyEyeballs: true`
+  - `loglevel: info`, `transport-loglevel: warn`, `retries: 5`, `graceful-shutdown-seconds: 5`, `edge-ip-version: auto`
 - `CORS_ALLOW_ORIGINS`: comma-separated origins for browser clients (e.g., `http://localhost:6274,https://your-host`).
 - Tunnel/issuer setup happens automatically; server updates issuer based on the public URL when available.
 - WebAuthn/Operator:

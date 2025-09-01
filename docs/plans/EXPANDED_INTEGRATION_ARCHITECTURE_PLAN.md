@@ -20,6 +20,8 @@ Status Summary (Per Capability)
 - Unified Kafka/NATS/RabbitMQ bridge: Partially available
   - Modules: `utils/kafka_events.py`, `utils/nats_*`, `utils/rabbitmq_queue.py`
 
+Tracking: https://github.com/KooshaPari/zen/issues?q=is%3Aissue+label%3Aroadmap
+
 ---
 
 ## 🏗️ **Architecture Overview**
