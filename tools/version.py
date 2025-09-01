@@ -206,7 +206,6 @@ WHEN TO USE: For diagnostics, troubleshooting, or when you need to know server c
             # We need access to the server instance
             # This is a bit hacky but works for now
             import server as server_module
-
             from utils.client_info import format_client_info, get_client_info_from_context
 
             client_info = get_client_info_from_context(server_module.server)

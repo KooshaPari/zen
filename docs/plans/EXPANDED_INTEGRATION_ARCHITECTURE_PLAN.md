@@ -1,4 +1,5 @@
 # Expanded Integration Architecture Plan
+Note: Some examples reference legacy REST (`/tasks`). The active transport is MCP over `/mcp`; adapt examples to JSON‑RPC tool calls and SSE where applicable.
 ## Next-Generation Agent Orchestration with NATS, A2A, Redis & Enterprise Technologies
 
 This document expands our communication protocol with enterprise-grade technologies for scalable, distributed agent orchestration systems.

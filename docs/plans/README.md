@@ -17,3 +17,6 @@ Notes:
 
 Tracking
 - Issues: https://github.com/KooshaPari/zen/issues?q=is%3Aissue+label%3Aroadmap
+- Milestones: https://github.com/KooshaPari/zen/milestones
+ - Project setup script: `scripts/create_projects_board.sh` (requires gh project scope)
+ - Saved views script: `scripts/create_project_views.sh` (creates views grouped by Milestone and filtered by component labels)

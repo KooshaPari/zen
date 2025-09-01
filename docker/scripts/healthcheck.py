@@ -4,17 +4,20 @@ Health check script for Zen MCP Server Docker container
 """
 
 import os
-import subprocess
 import sys
 
 
-def check_process():
-    """Check if the main server process is running"""
-    result = subprocess.run(["pgrep", "-f", "server.py"], capture_output=True, text=True, timeout=10)
-    if result.returncode == 0:
-        return True
-    print(f"Process check failed: {result.stderr}", file=sys.stderr)
-    return False
+def check_http():
+    """Check HTTP health endpoint of the Streamable MCP server"""
+    import urllib.request
+    port = int(os.getenv("PORT", "8080"))
+    url = f"http://127.0.0.1:{port}/healthz"
+    try:
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            return 200 <= resp.status < 300
+    except Exception as e:
+        print(f"HTTP health check failed: {e}", file=sys.stderr)
+        return False
 
 
 def check_python_imports():
@@ -82,7 +85,7 @@ def check_environment():
 def main():
     """Main health check function"""
     checks = [
-        ("Process", check_process),
+        ("HTTP", check_http),
         ("Python imports", check_python_imports),
         ("Log directory", check_log_directory),
         ("Environment", check_environment),

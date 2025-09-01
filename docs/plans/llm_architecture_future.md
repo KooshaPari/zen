@@ -1,4 +1,5 @@
 # Future LLM Architecture Enhancement Plan
+Note: This plan references legacy `/tasks` concepts. The active transport is MCP over `/mcp`. Apply the same concepts via tools/call and streaming SSE endpoints in `server_mcp_http.py`.
 
 ## Executive Summary
 

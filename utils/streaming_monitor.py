@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class StreamingMetrics:
     total_tokens: int = 0
 
     # Streaming metrics
-    tokens_per_second: List[float] = field(default_factory=list)
+    tokens_per_second: list[float] = field(default_factory=list)
     current_tps: float = 0.0
     average_tps: float = 0.0
 
@@ -109,13 +109,13 @@ class StreamingMonitor:
 
     def __init__(self):
         """Initialize the streaming monitor."""
-        self.active_streams: Dict[str, StreamingMetrics] = {}
-        self.completed_streams: Dict[str, StreamingMetrics] = {}
+        self.active_streams: dict[str, StreamingMetrics] = {}
+        self.completed_streams: dict[str, StreamingMetrics] = {}
 
         # Callbacks for events
-        self.on_first_token_callbacks: List[Callable] = []
-        self.on_stream_complete_callbacks: List[Callable] = []
-        self.on_anomaly_callbacks: List[Callable] = []
+        self.on_first_token_callbacks: list[Callable] = []
+        self.on_stream_complete_callbacks: list[Callable] = []
+        self.on_anomaly_callbacks: list[Callable] = []
 
         # Performance thresholds
         self.ttft_warning_ms = 2000  # Warn if TTFT > 2s
@@ -137,14 +137,14 @@ class StreamingMonitor:
                      output_cost_per_token: float) -> StreamingMetrics:
         """
         Start monitoring a new stream.
-        
+
         Args:
             request_id: Unique request identifier
             model_name: Model being used
             input_tokens: Number of input tokens
             input_cost_per_token: Cost per input token
             output_cost_per_token: Cost per output token
-            
+
         Returns:
             StreamingMetrics object
         """
@@ -173,12 +173,12 @@ class StreamingMonitor:
                           token_count: Optional[int] = None) -> Optional[TokenChunk]:
         """
         Record a chunk of tokens received.
-        
+
         Args:
             request_id: Request identifier
             content: Text content of chunk
             token_count: Number of tokens (estimated if not provided)
-            
+
         Returns:
             TokenChunk object or None if stream not found
         """
@@ -261,12 +261,12 @@ class StreamingMonitor:
                   error: Optional[str] = None) -> Optional[StreamingMetrics]:
         """
         Mark a stream as completed.
-        
+
         Args:
             request_id: Request identifier
             success: Whether stream completed successfully
             error: Error message if failed
-            
+
         Returns:
             Final StreamingMetrics or None
         """
@@ -303,7 +303,7 @@ class StreamingMonitor:
         """Get metrics for a stream (active or completed)."""
         return self.active_streams.get(request_id) or self.completed_streams.get(request_id)
 
-    def get_active_streams(self) -> List[StreamingMetrics]:
+    def get_active_streams(self) -> list[StreamingMetrics]:
         """Get all active stream metrics."""
         return list(self.active_streams.values())
 
@@ -371,7 +371,7 @@ class StreamingMonitor:
                          callback: Callable):
         """
         Register a callback for events.
-        
+
         Args:
             event_type: Type of event ('first_token', 'complete', 'anomaly')
             callback: Function to call
@@ -385,7 +385,7 @@ class StreamingMonitor:
         else:
             logger.warning(f"Unknown event type: {event_type}")
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get overall streaming statistics."""
         all_streams = list(self.active_streams.values()) + list(self.completed_streams.values())
 
@@ -437,7 +437,7 @@ class StreamingMonitor:
                                   output_cost_per_token: float):
         """
         Async wrapper to monitor a streaming generator.
-        
+
         Args:
             request_id: Request identifier
             stream_generator: Async generator yielding chunks
@@ -445,12 +445,12 @@ class StreamingMonitor:
             input_tokens: Number of input tokens
             input_cost_per_token: Cost per input token
             output_cost_per_token: Cost per output token
-            
+
         Yields:
             Content chunks from the generator
         """
         # Start monitoring
-        metrics = self.start_stream(
+        self.start_stream(
             request_id,
             model_name,
             input_tokens,

@@ -200,7 +200,7 @@ docker-compose down --timeout 10
 
 The container includes comprehensive health checks:
 
-- **Process check**: Verifies server.py is running
+- **HTTP check**: Probes `GET /healthz` inside the container
 - **Import check**: Validates critical Python modules
 - **Directory check**: Ensures log directory is writable
 - **API check**: Tests provider connectivity

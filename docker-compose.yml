@@ -96,6 +96,9 @@ services:
       - TZ=${TZ:-UTC}
       # Kafka bootstrap (in-container). Override to localhost:9092 when running server on host
       - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
+      # HTTP MCP server port and tunnel behavior
+      - PORT=${PORT:-8080}
+      - DISABLE_TUNNEL=1
     
     # Volumes for persistent data
     volumes:
@@ -108,6 +111,8 @@ services:
       - zen-network
     depends_on:
       - kafka
+    ports:
+      - "8080:8080"
     
     # Resource limits
     deploy:

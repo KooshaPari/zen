@@ -1,4 +1,5 @@
 # Agent Orchestration Implementation Summary
+Note: References to `server.py` (STDIO) reflect archived implementation. The active server is the Streamable HTTP MCP server.
 Location: Moved to `docs/reports/`.
 
 ## 🎉 Implementation Complete

@@ -2,35 +2,27 @@
 set -euo pipefail
 
 API_BASE="${API_BASE:-http://localhost:8080}"
+AUTH_HEADER=()
+if [[ -n "${TOKEN:-}" ]]; then AUTH_HEADER=("-H" "Authorization: Bearer $TOKEN"); fi
 
-echo "[API] Health check" >&2
-curl -sS "$API_BASE/health" | jq . || true
+echo "[API] Health check (/healthz)" >&2
+curl -sS "$API_BASE/healthz" | jq . || true
 
-echo "[API] Create single LLM task" >&2
-CREATE=$(curl -sS -X POST "$API_BASE/tasks" \
+echo "[MCP] List tools" >&2
+curl -sS -X POST "$API_BASE/mcp" \
   -H 'Content-Type: application/json' \
-  -d '{
-    "model": "anthropic/claude-3.5-haiku",
-    "message": "Return the word: hello",
-    "task_description": "hello-smoke"
-  }')
-echo "$CREATE" | jq . || true
+  "${AUTH_HEADER[@]}" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq . || true
 
-TASK_ID=$(echo "$CREATE" | jq -r .task_id 2>/dev/null || true)
-if [[ -n "${TASK_ID:-}" && "$TASK_ID" != "null" ]]; then
-  echo "[API] Poll task results for $TASK_ID" >&2
-  curl -sS "$API_BASE/tasks/$TASK_ID/results" | jq . || true
-fi
-
-echo "[API] Batch (parallel) with two items" >&2
-curl -sS -X POST "$API_BASE/llm/batch" \
+echo "[MCP] Call version tool" >&2
+curl -sS -X POST "$API_BASE/mcp" \
   -H 'Content-Type: application/json' \
+  "${AUTH_HEADER[@]}" \
   -d '{
-    "batch_mode": "parallel",
-    "batch_items": [
-      {"model": "anthropic/claude-3.5-haiku", "message": "Batch A"},
-      {"model": "anthropic/claude-3.5-haiku", "message": "Batch B"}
-    ]
+    "jsonrpc":"2.0",
+    "id":2,
+    "method":"tools/call",
+    "params":{"name":"version","arguments":{}}
   }' | jq . || true
 
-echo "[API] Done" >&2
+echo "[MCP] Done" >&2

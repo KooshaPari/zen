@@ -1,5 +1,7 @@
 Streamable HTTP API (Real-time Streaming)
 
+Deprecated: This document describes the legacy minimal REST server (`server_http.py`) with `/tasks` routes. The project is now Streamable HTTP MCP-only via `/mcp`. See `docs/streamable_http_mcp.md` for the current interface and examples.
+
 Endpoints
 
 - POST /tasks: Create and start a new task (202 Accepted)

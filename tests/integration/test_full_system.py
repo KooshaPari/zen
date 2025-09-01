@@ -285,8 +285,8 @@ async def test_database_operations():
 
         # Test schema existence
         cursor.execute("""
-            SELECT schema_name 
-            FROM information_schema.schemata 
+            SELECT schema_name
+            FROM information_schema.schemata
             WHERE schema_name LIKE 'zen_%'
         """)
 
@@ -304,8 +304,8 @@ async def test_database_operations():
 
         # Test inserting performance data
         cursor.execute("""
-            INSERT INTO zen_performance.model_performance 
-            (model_name, provider, task_type, input_tokens, output_tokens, 
+            INSERT INTO zen_performance.model_performance
+            (model_name, provider, task_type, input_tokens, output_tokens,
              total_time, total_cost, success)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id

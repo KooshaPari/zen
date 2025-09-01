@@ -1,4 +1,5 @@
 # Aegis LangGraph Integration
+Deprecated (Legacy REST examples): This guide includes legacy `/tasks` examples. The active server exposes MCP over `/mcp`. Prefer using LangGraph via tool calls over MCP.
 
 This document describes the Aegis provider integration with LangGraph for sophisticated multi-agent workflow orchestration in the Zen MCP Server.
 
@@ -33,7 +34,28 @@ python -c "from providers.aegis import AegisProvider; print('Aegis provider avai
 
 ### Basic Usage
 
-#### Universal Executor Tool
+#### MCP HTTP — Call Aegis via Deploy Tool (preferred)
+
+```bash
+curl -sS -X POST http://localhost:8080/mcp \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "jsonrpc":"2.0",
+    "id": 10,
+    "method": "tools/call",
+    "params": {
+      "name": "deploy",
+      "arguments": {
+        "prompt": "Plan a multi-agent investigation for the provided codebase",
+        "workflow_type": "aegis",
+        "model": "auto",
+        "execution_mode": "sync"
+      }
+    }
+  }'
+```
+
+#### (Legacy REST) Universal Executor Tool
 
 ```json
 {

@@ -16,55 +16,12 @@ def apply_oauth_fix():
     # Read the current server file
     server_file = "server_mcp_http.py"
     with open(server_file) as f:
-        content = f.read()
+        f.read()
 
     # Fix 1: Modify the oauth_consent endpoint to pass through authorization params
     # After consent approval, we need to redirect with all the OAuth params preserved
-    fix1 = """
-                    # Store consent approval
-                    logger.info(f"✅ POST /oauth/consent approved for {client_id} cid={self._cid(request)}")
-                    
-                    # Get the original OAuth params from the form (they should be hidden fields)
-                    response_type = form.get("response_type", "code")
-                    redirect_uri = form.get("redirect_uri", "")
-                    state = form.get("state", "")
-                    code_challenge = form.get("code_challenge", "")
-                    code_challenge_method = form.get("code_challenge_method", "S256")
-                    
-                    # Generate authorization code directly here
-                    from auth.oauth2_server import OAuth2Server
-                    if self.oauth2_server:
-                        # Create a simple session indicator
-                        auth_code = self.oauth2_server._generate_authorization_code(
-                            client_id=client_id,
-                            user_id="device_user",  # From device auth
-                            redirect_uri=redirect_uri,
-                            scope=scope or "mcp:read",
-                            code_challenge=code_challenge,
-                            code_challenge_method=code_challenge_method
-                        )
-                        
-                        # Redirect to callback with authorization code
-                        from urllib.parse import urlencode
-                        callback_params = {"code": auth_code.code}
-                        if state:
-                            callback_params["state"] = state
-                        
-                        callback_url = f"{redirect_uri}?{urlencode(callback_params)}"
-                        return RedirectResponse(url=callback_url, status_code=303)
-    """
 
     # Fix 2: Update the consent form to include all OAuth params as hidden fields
-    fix2 = """
-                            <input type="hidden" name="client_id" value="{client_id}">
-                            <input type="hidden" name="scope" value="{scope}">
-                            <input type="hidden" name="consent_id" value="{params.get('consent_id', '')}">
-                            <input type="hidden" name="response_type" value="{params.get('response_type', 'code')}">
-                            <input type="hidden" name="redirect_uri" value="{params.get('redirect_uri', '')}">
-                            <input type="hidden" name="state" value="{params.get('state', '')}">
-                            <input type="hidden" name="code_challenge" value="{params.get('code_challenge', '')}">
-                            <input type="hidden" name="code_challenge_method" value="{params.get('code_challenge_method', 'S256')}">
-    """
 
     print("OAuth Flow Fix")
     print("-" * 50)

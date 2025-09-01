@@ -212,7 +212,7 @@ class KafkaEventPublisher:
             "compression_type": compression_type,
             "acks": acks,  # Leader acknowledgment only for performance
             "retries": retries,
-            "max_in_flight_requests_per_connection": 5,
+            "max_in_flight_requests_per_connection": 1,  # Must be 1 for idempotence
             "enable_idempotence": True,  # Prevent duplicates
             "buffer_memory": 67108864,  # 64MB buffer
             "max_request_size": 1048576,  # 1MB max message size

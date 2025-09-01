@@ -1,4 +1,8 @@
 # Zen MCP Streamable HTTP Interface
+Note: Migration to Streamable HTTP-only
+
+The project has been streamlined to the Streamable HTTP MCP server. The legacy STDIO server (server.py) is archived under `archive/stdio/`, and the minimal aiohttp HTTP server has been removed. Use `server_mcp_http.py` with `deploy_mcp_http.py` for all deployments and local runs. Docker images now start the Streamable HTTP server on `PORT` (default 8080).
+
 Status: Implemented — endpoints and flows available; see also `STREAMING_HTTP.md`.
 
 This document explains how to expose any stdio MCP server through an HTTP(S) endpoint with OAuth 2.0, using the Streamable HTTP pattern implemented in this repository. It covers endpoints, auth flows, required headers, dynamic client registration, WebAuthn operator gating (optional), and how to swap in your own SaaS auth (e.g., Supabase) instead of the local operator/TouchID shim.

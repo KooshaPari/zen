@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from tools.shared.agent_models import AgentTask, AgentTaskRequest, AgentTaskResult, AgentType, TaskStatus
+    from tools.shared.agent_models import AgentTask, AgentTaskRequest, AgentTaskResult, AgentType
 
 import httpx
 

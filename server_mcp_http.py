@@ -22,13 +22,13 @@ import contextvars
 import json
 import logging
 import os
+import random
 import sys
 import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
-import random
 
 # Load environment variables from .env file if available
 try:
@@ -98,7 +98,7 @@ try:
     import uvicorn
     from fastapi import FastAPI, Header, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+    from fastapi.responses import JSONResponse, RedirectResponse, StreamingResponse
     from fastapi.staticfiles import StaticFiles
     FASTAPI_AVAILABLE = True
 except ImportError:
@@ -114,15 +114,15 @@ except ImportError as e:
     ) from e
 
 # Zen server imports
-from tools import get_all_tools
-from tools.shared.agent_models import AgentType
-from utils.agent_prompts import (
+from tools import get_all_tools  # noqa: E402
+from tools.shared.agent_models import AgentType  # noqa: E402
+from utils.agent_prompts import (  # noqa: E402
     enhance_agent_message,
     format_agent_summary,
     parse_agent_output,
 )
-from utils.conversation_memory import ConversationMemoryManager
-from utils.streaming_protocol import (
+from utils.conversation_memory import ConversationMemoryManager  # noqa: E402
+from utils.streaming_protocol import (  # noqa: E402
     InputTransformationPipeline,
     StreamingResponseParser,
     StreamMessageType,
@@ -3020,10 +3020,16 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
             root_domain = root_env or "kooshapari.com"
             if full_host:
                 parts = full_host.split('.')
-                if len(parts) >= 2:
+                # Only override if we have a subdomain (3+ parts like zen.kooshapari.com)
+                # For apex domains (kooshapari.com), keep the env_service
+                if len(parts) >= 3:
                     service_name = parts[0]
                     root_domain = ".".join(parts[1:])
+                elif len(parts) == 2:
+                    # Apex domain like kooshapari.com - use as root_domain but keep service_name
+                    root_domain = full_host
                 else:
+                    # Single word - treat as root domain
                     root_domain = full_host
 
             logger.info(f"Setting up tunnel for port {port} to {service_name}.{root_domain}")
@@ -3185,6 +3191,43 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
                                 self.oauth2_server.oauth_integration_server = self.oauth_integration_server
                             print(f"🔒 OAuth 2.0 server initialized with issuer: {issuer}")
                             logger.info(f"🔒 OAuth 2.0 server initialized with issuer: {issuer}")
+                            
+                            # Sync any existing DCR clients to OAuth2Server
+                            try:
+                                from auth.oauth2_dcr import get_dcr_manager
+                                from auth.oauth2_server import GrantType, OAuthClient as OAuth2Client
+                                dcr_manager = get_dcr_manager()
+                                
+                                # Get all DCR clients
+                                dcr_clients = await dcr_manager.list_clients()
+                                synced_count = 0
+                                
+                                for dcr_client in dcr_clients:
+                                    if dcr_client.client_id not in self.oauth2_server.clients:
+                                        # Mirror DCR client to OAuth2Server
+                                        token_auth = getattr(dcr_client, "token_endpoint_auth_method", None) or "none"
+                                        is_public = (token_auth == "none")
+                                        redirect_uris = list(getattr(dcr_client, "redirect_uris", []) or [])
+                                        scope_str = getattr(dcr_client, "scope", "mcp mcp:read mcp:write") or ""
+                                        allowed_scopes = set(scope_str.split()) if isinstance(scope_str, str) else {"mcp:read", "mcp:write"}
+                                        
+                                        oauth_client = OAuth2Client(
+                                            client_id=dcr_client.client_id,
+                                            client_secret=None,
+                                            redirect_uris=redirect_uris,
+                                            allowed_grant_types={GrantType.AUTHORIZATION_CODE, GrantType.REFRESH_TOKEN},
+                                            allowed_scopes=allowed_scopes,
+                                            is_public=is_public,
+                                            name=getattr(dcr_client, "client_name", None) or "MCP Client"
+                                        )
+                                        self.oauth2_server.register_client(oauth_client)
+                                        synced_count += 1
+                                
+                                if synced_count > 0:
+                                    logger.info(f"📋 Synced {synced_count} DCR clients to OAuth2Server")
+                                    print(f"📋 Synced {synced_count} DCR clients to OAuth2Server")
+                            except Exception as sync_error:
+                                logger.warning(f"Failed to sync DCR clients: {sync_error}")
                         except Exception as oauth_error:
                             logger.warning(f"Failed to initialize OAuth 2.0 server (tunnel): {oauth_error}")
 
@@ -3230,6 +3273,43 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
                     self.oauth2_server.oauth_integration_server = self.oauth_integration_server
                 print(f"🔒 OAuth 2.0 server initialized with issuer: {issuer}")
                 logger.info(f"🔒 OAuth 2.0 server initialized with issuer: {issuer}")
+                
+                # Sync any existing DCR clients to OAuth2Server
+                try:
+                    from auth.oauth2_dcr import get_dcr_manager
+                    from auth.oauth2_server import GrantType, OAuthClient as OAuth2Client
+                    dcr_manager = get_dcr_manager()
+                    
+                    # Get all DCR clients
+                    dcr_clients = await dcr_manager.list_clients()
+                    synced_count = 0
+                    
+                    for dcr_client in dcr_clients:
+                        if dcr_client.client_id not in self.oauth2_server.clients:
+                            # Mirror DCR client to OAuth2Server
+                            token_auth = getattr(dcr_client, "token_endpoint_auth_method", None) or "none"
+                            is_public = (token_auth == "none")
+                            redirect_uris = list(getattr(dcr_client, "redirect_uris", []) or [])
+                            scope_str = getattr(dcr_client, "scope", "mcp mcp:read mcp:write") or ""
+                            allowed_scopes = set(scope_str.split()) if isinstance(scope_str, str) else {"mcp:read", "mcp:write"}
+                            
+                            oauth_client = OAuth2Client(
+                                client_id=dcr_client.client_id,
+                                client_secret=None,
+                                redirect_uris=redirect_uris,
+                                allowed_grant_types={GrantType.AUTHORIZATION_CODE, GrantType.REFRESH_TOKEN},
+                                allowed_scopes=allowed_scopes,
+                                is_public=is_public,
+                                name=getattr(dcr_client, "client_name", None) or "MCP Client"
+                            )
+                            self.oauth2_server.register_client(oauth_client)
+                            synced_count += 1
+                    
+                    if synced_count > 0:
+                        logger.info(f"📋 Synced {synced_count} DCR clients to OAuth2Server")
+                        print(f"📋 Synced {synced_count} DCR clients to OAuth2Server")
+                except Exception as sync_error:
+                    logger.warning(f"Failed to sync DCR clients: {sync_error}")
             except Exception as oauth_error:
                 logger.warning(f"Failed to initialize OAuth 2.0 server (no tunnel): {oauth_error}")
 
@@ -3284,8 +3364,8 @@ Use the "zen_help" prompt with topic "tools" to see all available tools."""
                     self._tunnel_failures_total += 1
                     # DNS resolution hint for diagnostics
                     try:
-                        from urllib.parse import urlparse
                         import socket
+                        from urllib.parse import urlparse
                         host = urlparse(self.tunnel_url or "").hostname
                         if host:
                             socket.getaddrinfo(host, None)
@@ -3581,7 +3661,7 @@ def main():
                     config_data = re.sub(r'service: http://localhost:\d+', f'service: http://localhost:{dev_port}', config_data)
                     # Inject recommended settings if missing
                     if 'originRequest:' not in config_data:
-                        config_data += f"\noriginRequest:\n  connectTimeout: 10s\n  keepAliveTimeout: 30s\n  tcpKeepAlive: 30s\n  http2Origin: true\n  noHappyEyeballs: true\n"
+                        config_data += "\noriginRequest:\n  connectTimeout: 10s\n  keepAliveTimeout: 30s\n  tcpKeepAlive: 30s\n  http2Origin: true\n  noHappyEyeballs: true\n"
                     if 'loglevel:' not in config_data:
                         config_data += "\nloglevel: info\n"
                     if 'transport-loglevel:' not in config_data:
@@ -3694,10 +3774,11 @@ if "uvicorn" in sys.modules:
         # Create minimal app as fallback
         from fastapi import FastAPI
         app = FastAPI(title="Zen MCP Server (Error)")
+        err_text = str(e)
 
         @app.get("/")
         def error_message():
-            return {"error": f"Failed to initialize: {str(e)}"}
+            return {"error": f"Failed to initialize: {err_text}"}
 
 if __name__ == "__main__":
     main()

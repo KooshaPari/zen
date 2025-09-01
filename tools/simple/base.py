@@ -565,12 +565,15 @@ class SimpleTool(BaseTool):
                 return [TextContent(type="text", text=json_content)]
 
             logger.error(f"Error in {self.get_name()}: {str(e)}")
-            error_output = ToolOutput(
-                status="error",
-                content=f"Error in {self.get_name()}: {str(e)}",
-                content_type="text",
-            )
-            return [TextContent(type="text", text=error_output.model_dump_json())]
+            # Include explicit 'error' field for tests that expect it
+            error_payload = {
+                "status": "error",
+                "error": str(e),
+                "content": f"Error in {self.get_name()}: {str(e)}",
+                "content_type": "text",
+                "metadata": {"tool_name": self.get_name()},
+            }
+            return [TextContent(type="text", text=json.dumps(error_payload, ensure_ascii=False))]
 
     def _parse_response(self, raw_text: str, request, model_info: Optional[dict] = None):
         """

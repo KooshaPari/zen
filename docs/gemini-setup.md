@@ -33,7 +33,8 @@ This guide explains how to configure Zen MCP Server to work with [Gemini CLI](ht
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
-exec .zen_venv/bin/python server.py "$@"
+   # STDIO wrapper for archived server.py; prefer HTTP MCP via deploy_mcp_http.py
+   exec .zen_venv/bin/python server.py "$@"
 ```
 
 Then make it executable: `chmod +x zen-mcp-server`

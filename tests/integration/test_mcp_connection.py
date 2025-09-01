@@ -6,7 +6,7 @@ dependency is missing, tests will be skipped instead of exiting.
 """
 
 import asyncio
-import sys
+
 import pytest
 
 # Mark entire module as integration to allow easy skipping
@@ -43,7 +43,7 @@ async def test_connection():
 
         # Test a simple tool call
         print("\nTesting 'listmodels' tool...")
-        models = await client.call_tool("listmodels", {})
+        await client.call_tool("listmodels", {})
         print("✅ Tool call successful!")
 
     except Exception as e:

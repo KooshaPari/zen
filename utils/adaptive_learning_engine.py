@@ -839,7 +839,7 @@ class AdaptiveLearningEngine:
     def _prepare_training_data(self) -> tuple[Optional[np.ndarray], Optional[np.ndarray]]:
         """
         Prepare training data from actual performance history.
-        
+
         Returns:
             Tuple of (features, targets) arrays or (None, None) if insufficient data
         """

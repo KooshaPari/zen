@@ -879,16 +879,6 @@ class A2AProtocolManager:
             return None
 
 
-        # Return heartbeat acknowledgment
-        return A2AMessage(
-            message_id=str(uuid.uuid4()),
-            sender_id=self.agent_id,
-            receiver_id=message.sender_id,
-            message_type=A2AMessageType.HEARTBEAT,
-            timestamp=datetime.now(timezone.utc),
-            payload={"status": "alive"}
-        )
-
     async def _handle_error(self, message: A2AMessage) -> Optional[A2AMessage]:
         """Handle error message."""
         logger.error(f"A2A error from {message.sender_id}: {message.payload}")

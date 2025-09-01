@@ -1,4 +1,5 @@
 # Zen MCP Server - Comprehensive Streaming Communication System
+Note: Some endpoint examples reference legacy REST routes. Prefer MCP over `/mcp` with SSE `/stream/{task_id}` and `/events/live`.
 
 This guide covers the complete streaming communication system that transforms agent orchestration from basic request-response to real-time, intelligent, and intuitive interaction.
 

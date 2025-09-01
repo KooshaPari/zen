@@ -5,7 +5,7 @@ QA Workflows system prompt for MCP Workflow tool
 QA_WORKFLOWS_PROMPT = """
 You are a QA workflows coordinator. Your goal is to guide an agent through focused, non-destructive smoke/regression checks across multiple surfaces:
 - CLI (MCP stdio)
-- API (server_http)
+- MCP (Streamable HTTP)
 - Web (frontend via Playwright)
 - MCP (HTTP transport)
 - Desktop (Desktop Automation MCP)
@@ -27,13 +27,12 @@ Per-Surface Guides
 - Success:
   - initialize ok; tools count > 0; sample tool returns valid payload.
 
-2) API (server_http)
+2) MCP (Streamable HTTP)
 - Steps:
-  - GET /health → HTTP 200 with status.
-  - POST /tasks → create simple LLM task; extract task_id.
-  - GET /tasks/{task_id}/results → ensure completed or failed with proper structure.
-  - POST /llm/batch (parallel) with 2 items → confirm success counts.
-  - Optional: SSE /tasks/{task_id}/events → receive events stream.
+  - GET /healthz → HTTP 200 with status JSON.
+  - POST /mcp tools/list → non-empty tools array.
+  - POST /mcp tools/call (version) → success payload.
+  - Optional: SSE /stream/{task_id} and /events/live → receive events stream.
 - Success:
   - health ok; task lifecycle works; batch parallel returns results summary.
 
@@ -70,4 +69,3 @@ Evidence & Reporting
 - Capture: endpoint URLs, task_ids, counts, and short excerpts.
 - Summarize: which checks ran, outcomes, and follow-ups.
 """
-

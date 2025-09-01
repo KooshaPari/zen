@@ -1,5 +1,7 @@
 # Adding a New Provider
 
+Note: References to the legacy STDIO server (`server.py`) reflect archived code. Provider registration works the same with the Streamable HTTP MCP server; prefer integrating via `server_mcp_http.py`.
+
 This guide explains how to add support for a new AI model provider to the Zen MCP Server. The provider system is designed to be extensible and follows a simple pattern.
 
 ## Overview

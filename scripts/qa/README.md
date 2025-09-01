@@ -1,5 +1,5 @@
 Quickstart
-- API smoke: `bash scripts/qa/curl_api_smoke.sh` (requires `server_http` running on :8080)
+- MCP HTTP smoke: `bash scripts/qa/curl_api_smoke.sh` (requires Streamable MCP HTTP on :8080)
 - MCP stdio smoke: `python scripts/qa/mcp_stdio_ping.py`
 
 Notes

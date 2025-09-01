@@ -1,7 +1,7 @@
 # Zen MCP Server: Streamable HTTP + Redis + NATS Ops Guide
 Status: Implemented — features are env‑gated and default to in‑memory when disabled.
 
-This document describes the operational model for the streamable HTTP server with Redis persistence and NATS JetStream events. All features are env-gated and default to in-memory/in-proc behavior.
+Note: Legacy REST. This document describes the operational model for the older streamable HTTP server (`server_http.py`) with `/tasks` routes. The active server is Streamable HTTP MCP via `/mcp` (see `docs/streamable_http_mcp.md`). Many storage/event concepts still apply.
 
 ## Components
 - HTTP API (aiohttp): streamable endpoints (SSE/WebSocket)

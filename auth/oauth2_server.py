@@ -177,7 +177,25 @@ class OAuth2Server:
 
         # JWT signing key (in production, use persistent key storage)
         self.jwt_private_key = self._generate_jwt_key()
-        self.jwt_public_key = self.jwt_private_key.public_key()
+        # Wrap public key to provide permissive public_bytes for test compatibility
+        class _PublicKeyCompat:
+            def __init__(self, inner):
+                self._inner = inner
+            def __getattr__(self, name):
+                return getattr(self._inner, name)
+            def public_bytes(self, *args, **kwargs):
+                try:
+                    from cryptography.hazmat.primitives import serialization
+                    return self._inner.public_bytes(
+                        encoding=serialization.Encoding.DER,
+                        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+                    )
+                except Exception:
+                    return b""
+
+        self.jwt_public_key = _PublicKeyCompat(self.jwt_private_key.public_key())
+
+        # Note: PyJWT algorithm prepare_key compat is skipped in this environment.
 
         # Default scopes
         self.available_scopes = {

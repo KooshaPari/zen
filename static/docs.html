@@ -3,12 +3,15 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Zen MCP API Docs</title>
+  <title>Zen MCP API Docs (Legacy REST)</title>
   <style>html,body,#redoc{height:100%;margin:0;padding:0}</style>
-  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  
 </head>
 <body>
-  <redoc spec-url="/openapi.json"></redoc>
+  <div style="padding: 12px; background:#fff3cd; border:1px solid #ffeeba; border-radius:6px; margin:12px 0;">
+    <strong>Deprecated:</strong> The REST OpenAPI spec and UI have been archived.
+    Use the Streamable HTTP MCP server via <code>/mcp</code>. See <code>docs/streamable_http_mcp.md</code> in the repo.
+  </div>
   <script>
     // Add a simple helper section for ContentPart usage
     document.addEventListener('DOMContentLoaded', () => {
@@ -23,4 +26,3 @@
   </script>
 </body>
 </html>
-

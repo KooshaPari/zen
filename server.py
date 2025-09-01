@@ -15,11 +15,12 @@ from __future__ import annotations
 
 import json
 from types import SimpleNamespace
+
 try:
     from config import DEFAULT_MODEL as DEFAULT_MODEL  # re-export for tests that patch server.DEFAULT_MODEL
 except Exception:
     DEFAULT_MODEL = "auto"
-from typing import Any, Optional
+from typing import Any
 
 
 class _TextResult(SimpleNamespace):
@@ -54,7 +55,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> list[_TextRe
     return [_TextResult(f"Unknown tool: {name}")]
 
 
-def parse_model_option(model_string: str) -> tuple[str, Optional[str]]:
+def parse_model_option(model_string: str) -> tuple[str, str | None]:
     """Parse "model:option" into model and option.
 
     Preserves OpenRouter suffixes (":free", ":beta", ":preview") as part of the model
@@ -135,7 +136,7 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
     """Build enhanced arguments with conversation history in 'prompt'.
 
     Uses utils.conversation_memory to retrieve thread context and assemble
-    a formatted history. Falls back gracefully in tests using monkeypatch. 
+    a formatted history. Falls back gracefully in tests using monkeypatch.
     """
     continuation_id = arguments.get("continuation_id")
     original_prompt = arguments.get("prompt", "")
@@ -158,7 +159,7 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
         enhanced["_remaining_tokens"] = 1024
         return enhanced
 
-    context: Optional[ThreadContext] = None
+    context: ThreadContext | None = None
     if continuation_id:
         try:
             context = get_thread(continuation_id)
@@ -169,10 +170,10 @@ async def reconstruct_thread_context(arguments: dict[str, Any]) -> dict[str, Any
         # Explicit error for invalid/expired continuation to match test expectations
         cid = continuation_id or ""
         raise ValueError(
-            (
+
                 f"Conversation thread '{cid}' was not found or has expired. "
                 "Please restart the conversation by providing your full question/prompt without the continuation_id."
-            )
+
         )
 
     history, _ = build_conversation_history(context)
@@ -191,8 +192,9 @@ def configure_providers() -> None:
     Raises ValueError if neither is configured.
     """
     import os
-    from providers.registry import ModelProviderRegistry
+
     from providers.base import ProviderType
+    from providers.registry import ModelProviderRegistry
 
     ModelProviderRegistry.clear_cache()
 

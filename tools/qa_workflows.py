@@ -3,9 +3,8 @@ QA Workflows Tool - Guided smoke/regression workflows across multiple surfaces
 
 This workflow tool orchestrates structured QA checks for:
 - CLI (MCP stdio)
-- API (server_http)
+- MCP (Streamable HTTP)
 - Web (frontend via Playwright)
-- MCP (HTTP transport)
 - Desktop (Desktop Automation MCP)
 - Mobile (mobile-next MCP)
 
@@ -101,11 +100,11 @@ class QAWorkflowsTool(WorkflowTool):
                 "Optionally call a safe tool (version or listmodels)",
             ]
         elif target == "api":
+            # Legacy alias for HTTP checks; map to MCP HTTP transport
             base = [
-                "GET /health returns 200 and valid JSON",
-                "POST /tasks creates a task and returns task_id",
-                "GET /tasks/{task_id}/results completes with structured payload",
-                "POST /llm/batch with batch_mode=parallel returns results summary",
+                "GET /healthz returns 200 JSON",
+                "POST /mcp tools/list returns non-empty list",
+                "POST /mcp tools/call name=version returns success",
             ]
         elif target == "web":
             base = [
@@ -165,4 +164,3 @@ class QAWorkflowsTool(WorkflowTool):
                 parts.append(f"[{sev}] {desc}")
         parts.append("\nProvide a concise QA assessment and recommended next actions.")
         return "\n".join(parts)
-

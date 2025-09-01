@@ -2,14 +2,14 @@
 """
 Simple SSE soak test for the streamable HTTP server.
 
-Spawns N concurrent clients connected to /events/live (global) or /tasks/{id}/events.
+Spawns N concurrent clients connected to /events/live (global) or /stream/{task_id}.
 
 Usage:
   python scripts/soak_sse.py --host http://localhost:8080 --clients 50 --duration 30 --mode global
 
 Modes:
   - global: connect to /events/live
-  - task:   connect to /tasks/{task_id}/events (requires --task-id)
+  - task:   connect to /stream/{task_id} (requires --task-id)
 """
 
 import argparse
@@ -54,9 +54,7 @@ async def main():
         print("--task-id is required for mode=task", file=sys.stderr)
         return 2
 
-    url = (
-        f"{args.host}/events/live" if args.mode == "global" else f"{args.host}/tasks/{args.task_id}/events"
-    )
+    url = f"{args.host}/events/live" if args.mode == "global" else f"{args.host}/stream/{args.task_id}"
 
     async with aiohttp.ClientSession() as session:
         tasks = [asyncio.create_task(sse_reader(session, url, i, args.duration)) for i in range(args.clients)]
@@ -71,4 +69,3 @@ if __name__ == "__main__":
         exit(asyncio.run(main()))
     except KeyboardInterrupt:
         pass
-

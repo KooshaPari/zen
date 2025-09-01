@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Zen MCP Task Stream Viewer</title>
+    <title>Zen MCP Stream Viewer</title>
     <style>
       body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; }
       .row { margin-bottom: .75rem; }
@@ -14,7 +14,7 @@
     </style>
   </head>
   <body>
-    <h1>Zen MCP Task Stream Viewer</h1>
+    <h1>Zen MCP Stream Viewer</h1>
 
     <div class="row">
       <label>Base URL: <input id="base" type="text" value="" placeholder="http://localhost:8080" /></label>
@@ -24,7 +24,7 @@
       <button id="watch">Watch</button>
     </div>
     <div class="row">
-      <button id="events">Listen to /events</button>
+      <button id="events">Listen to /events/live</button>
     </div>
 
     <h3>Status</h3>
@@ -57,7 +57,7 @@
         const base = buildBase();
         const task = $("task").value.trim();
         if (!task) { log("Please enter a task ID", "error"); return; }
-        const url = `${base}/tasks/${task}/stream`;
+        const url = `${base}/stream/${task}`;
         log(`Connecting to ${url} ...`, "ok");
         const es = new EventSource(url);
         currentEventSource = es;
@@ -71,7 +71,7 @@
       $("events").onclick = () => {
         closeCurrent();
         const base = buildBase();
-        const url = `${base}/events`;
+        const url = `${base}/events/live`;
         log(`Listening on ${url} ...`, "ok");
         const es = new EventSource(url);
         currentEventSource = es;
@@ -82,4 +82,3 @@
     </script>
   </body>
 </html>
-

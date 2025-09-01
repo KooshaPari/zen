@@ -22,9 +22,9 @@ from tools.shared.agent_models import (
     TaskStatus,
 )
 from tools.shared.base_tool import BaseTool
+from utils import agent_manager as agent_manager
 from utils.agent_defaults import get_default_working_directory
 from utils.batch_registry import append_task, register_batch
-from utils import agent_manager as agent_manager
 
 logger = logging.getLogger(__name__)
 

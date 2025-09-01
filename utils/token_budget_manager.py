@@ -17,7 +17,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -141,13 +141,13 @@ class TokenBudgetManager:
     def __init__(self):
         """Initialize the token budget manager."""
         # Budget configurations by period
-        self.budgets: Dict[BudgetPeriod, TokenBudget] = {}
+        self.budgets: dict[BudgetPeriod, TokenBudget] = {}
 
         # Active allocations
-        self.allocations: Dict[str, TokenAllocation] = {}
+        self.allocations: dict[str, TokenAllocation] = {}
 
         # Historical data for learning
-        self.allocation_history: List[TokenAllocation] = []
+        self.allocation_history: list[TokenAllocation] = []
 
         # Model-specific limits
         self.model_limits = {
@@ -177,12 +177,12 @@ class TokenBudgetManager:
                    total_budget_usd: Optional[float] = None) -> TokenBudget:
         """
         Set or update a budget for a period.
-        
+
         Args:
             period: Budget period
             total_tokens: Total token budget
             total_budget_usd: Optional USD budget
-            
+
         Returns:
             TokenBudget object
         """
@@ -222,7 +222,7 @@ class TokenBudgetManager:
                        estimated_cost_usd: float = 0.0) -> Optional[TokenAllocation]:
         """
         Allocate tokens for a request.
-        
+
         Args:
             request_id: Request identifier
             model_name: Model to use
@@ -230,7 +230,7 @@ class TokenBudgetManager:
             task_type: Type of task
             priority: Priority level (1-10)
             estimated_cost_usd: Estimated cost
-            
+
         Returns:
             TokenAllocation or None if cannot allocate
         """
@@ -305,12 +305,12 @@ class TokenBudgetManager:
                     actual_cost_usd: float = 0.0) -> bool:
         """
         Update token usage for an allocation.
-        
+
         Args:
             allocation_id: Allocation identifier
             used_tokens: Actual tokens used
             actual_cost_usd: Actual cost incurred
-            
+
         Returns:
             True if updated successfully
         """
@@ -344,12 +344,12 @@ class TokenBudgetManager:
                           final_cost: Optional[float] = None) -> bool:
         """
         Mark an allocation as completed.
-        
+
         Args:
             allocation_id: Allocation identifier
             final_tokens: Final token count
             final_cost: Final cost
-            
+
         Returns:
             True if completed successfully
         """
@@ -391,13 +391,13 @@ class TokenBudgetManager:
                             priority: int) -> int:
         """
         Calculate actual token allocation based on strategy.
-        
+
         Args:
             requested_tokens: Requested tokens
             model_name: Model name
             strategy: Allocation strategy
             priority: Priority level
-            
+
         Returns:
             Allocated token count
         """
@@ -451,13 +451,13 @@ class TokenBudgetManager:
 
             return requested_tokens
 
-    def get_budget_status(self, period: Optional[BudgetPeriod] = None) -> Dict[str, Any]:
+    def get_budget_status(self, period: Optional[BudgetPeriod] = None) -> dict[str, Any]:
         """
         Get budget status.
-        
+
         Args:
             period: Specific period or None for all
-            
+
         Returns:
             Budget status information
         """
@@ -487,7 +487,7 @@ class TokenBudgetManager:
             for period in self.budgets.keys()
         }
 
-    def get_allocation_statistics(self) -> Dict[str, Any]:
+    def get_allocation_statistics(self) -> dict[str, Any]:
         """Get allocation statistics."""
         active_allocations = [a for a in self.allocations.values() if a.is_active]
         completed_allocations = [a for a in self.allocation_history if a.is_completed]
@@ -531,10 +531,10 @@ class TokenBudgetManager:
     def predict_budget_exhaustion(self, period: BudgetPeriod) -> Optional[datetime]:
         """
         Predict when a budget will be exhausted.
-        
+
         Args:
             period: Budget period to check
-            
+
         Returns:
             Predicted exhaustion time or None
         """

@@ -80,7 +80,7 @@ Explainability (emitted with task)
 Integration points
 - utils/model_router.py: ComplexityEngine + ModelRouter already provide MVP hooks
 - BaseTool: when model auto/unavailable and ZEN_ROUTER_ENABLE=1 → build signals (prompt length, files/images count) and let router pick; later expand with more signals
-- server_http.handle_llm_task_create: same as above for direct LLM tasks (quick_qa default)
+- Legacy: `server_http.handle_llm_task_create` described direct LLM tasks. Use MCP `tools/call` for equivalent flows.
 
 Future (v2+)
 - ML Scorer: learn weights from outcomes; per-domain profiles
@@ -95,4 +95,3 @@ Acceptance criteria
 - Router decisions align with tier expectations and context limits
 - Risk controls enforced by tier and intent policies
 - No regressions when ZEN_ROUTER_ENABLE=0 (feature-flag safety)
-

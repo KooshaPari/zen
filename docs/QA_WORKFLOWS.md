@@ -7,15 +7,10 @@
 - Smoke: use `scripts/qa/mcp_stdio_ping.py` to initialize, list tools, and exit.
 - Notes: set `LOG_LEVEL=INFO` to reduce noise; ensure `.env` or API keys present for model-backed tools.
 
-**API**
-- Server: `python -m server_http --host 0.0.0.0 --port 8080`.
-- Health: `curl -s http://localhost:8080/health`.
-- LLM task (single):
-  - `curl -s -X POST http://localhost:8080/tasks -H 'Content-Type: application/json' -d '{"model":"anthropic/claude-3.5-haiku","message":"Say hello","task_description":"hello"}'`.
-- LLM batch (parallel):
-  - `curl -s -X POST http://localhost:8080/llm/batch -H 'Content-Type: application/json' -d '{"batch_mode":"parallel","batch_items":[{"model":"anthropic/claude-3.5-haiku","message":"Task A"},{"model":"anthropic/claude-3.5-haiku","message":"Task B"}]}'`.
-- SSE (live events): `curl -N http://localhost:8080/tasks/<TASK_ID>/events`.
-- See `scripts/qa/curl_api_smoke.sh` for a runnable sequence.
+**API (Legacy REST)**
+- Deprecated: legacy `/tasks` endpoints; prefer MCP over `/mcp`.
+- Server (legacy): `python -m server_http --host 0.0.0.0 --port 8080`.
+- Equivalent MCP smoke: `bash scripts/qa/curl_api_smoke.sh`.
 
 **Web (Playwright)**
 - Purpose: Frontend smoke against the HTTP surface (basic health + JSON payload assertions).
@@ -70,8 +65,7 @@
 - Side note to agents (embedded in system prompts): When decomposing independent sub-tasks, prefer a single `agent_batch` call with `coordination_strategy: 'parallel'` (2–10 tasks) over serial tool calls.
 
 **How to run locally**
-- Start stdio MCP: `./zen-mcp-server`.
-- Start HTTP API: `python -m server_http --host 0.0.0.0 --port 8080`.
-- Start MCP HTTP: `python -m server_mcp_http`.
-- Run curls: `bash scripts/qa/curl_api_smoke.sh`.
-- Stdio smoke: `python scripts/qa/mcp_stdio_ping.py`.
+- Start MCP HTTP: `python -m server_mcp_http` (or `python deploy_mcp_http.py --port-strategy env`).
+- (Optional, legacy) Start HTTP API: `python -m server_http --host 0.0.0.0 --port 8080`.
+- Run MCP curls: `bash scripts/qa/curl_api_smoke.sh`.
+- Stdio smoke (archived): `python scripts/qa/mcp_stdio_ping.py`.

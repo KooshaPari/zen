@@ -34,7 +34,7 @@ class ListModelsTool(BaseTool):
         return "listmodels"
 
     def get_description(self) -> str:
-        return """🤖 LIST MODELS - Discover available AI models and their capabilities.
+        return """🤖 LIST MODELS - Discover available AI models, model providers, and their capabilities.
 
 Use this tool to:
 • 🔍 VIEW PROVIDERS: See all configured AI providers (OpenAI, Anthropic, Google, etc.)

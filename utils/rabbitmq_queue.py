@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 """
 RabbitMQ Priority Task Queuing System
 
@@ -13,7 +14,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from pydantic import BaseModel
 
@@ -50,12 +51,12 @@ class QueuedTask(BaseModel):
     priority: TaskPriority = TaskPriority.NORMAL
     agent_request: AgentTaskRequest
     created_at: datetime
-    scheduled_at: Optional[datetime] = None  # For delayed tasks
+    scheduled_at: datetime | None = None  # For delayed tasks
     retry_count: int = 0
     max_retries: int = 3
     retry_delay_seconds: int = 30
     timeout_seconds: int = 300
-    correlation_id: Optional[str] = None
+    correlation_id: str | None = None
     metadata: dict[str, Any] = {}
 
 
@@ -64,9 +65,9 @@ class TaskResult(BaseModel):
 
     task_id: str
     status: TaskStatus
-    result: Optional[dict[str, Any]] = None
-    error: Optional[str] = None
-    execution_time_seconds: Optional[float] = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
+    execution_time_seconds: float | None = None
     completed_at: datetime
     retry_count: int = 0
 
@@ -91,10 +92,10 @@ class RabbitMQQueueManager:
         self.dead_letter_exchange = dead_letter_exchange
 
         # Connection and channel
-        self.connection: Optional[aio_pika.Connection] = None
-        self.channel: Optional[aio_pika.Channel] = None
-        self.exchange: Optional[aio_pika.Exchange] = None
-        self.dlx_exchange: Optional[aio_pika.Exchange] = None
+        self.connection: aio_pika.Connection | None = None
+        self.channel: aio_pika.Channel | None = None
+        self.exchange: aio_pika.Exchange | None = None
+        self.dlx_exchange: aio_pika.Exchange | None = None
 
         # Task handlers by queue name
         self.task_handlers: dict[str, Callable] = {}
@@ -521,7 +522,7 @@ class RabbitMQQueueManager:
 
 
 # Global queue manager instance
-_queue_manager: Optional[RabbitMQQueueManager] = None
+_queue_manager: RabbitMQQueueManager | None = None
 
 
 def get_queue_manager() -> RabbitMQQueueManager:

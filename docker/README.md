@@ -61,8 +61,8 @@ chmod +x docker/scripts/deploy.sh
 # Or use PowerShell script
 docker/scripts/deploy.ps1
 
-# Interactive stdio mode
-docker-compose exec zen-mcp python server.py
+# Interactive HTTP MCP (inside container)
+docker-compose exec zen-mcp python deploy_mcp_http.py --port-strategy env
 ```
 
 ## Service Management
@@ -107,7 +107,7 @@ docker-compose up -d zen-mcp
 ## Health Monitoring
 
 The container includes health checks that verify:
-- Server process is running
+- HTTP health endpoint (`GET /healthz`) responds
 - Python modules can be imported
 - Log directory is writable  
 - API keys are configured

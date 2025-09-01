@@ -8,7 +8,8 @@ Zen MCP Server is a comprehensive Model Context Protocol (MCP) server that provi
 
 ```
 zen-mcp-server/
-├── server.py              # Main MCP server entry point
+├── server.py              # (Archived) STDIO MCP server entry point
+├── server_mcp_http.py     # Main Streamable HTTP MCP server
 ├── tools/                  # MCP tool implementations
 │   ├── shared/            # Shared base classes and models
 │   ├── workflow/          # Workflow-based tools (analyze, debug, etc.)
@@ -93,7 +94,8 @@ class MyProvider(ModelProvider):
 - Individual tool files: Single-purpose tools
 
 ### Key Files
-- `server.py`: MCP server setup, tool registration, request handling
+- `server_mcp_http.py`: MCP HTTP server setup, tool registration, request handling
+- `server.py` (archived): legacy STDIO MCP server
 - `tools/shared/base_tool.py`: Base tool class with conversation memory
 - `utils/conversation_memory.py`: Thread-based conversation tracking
 - `providers/registry.py`: Model provider registry and selection

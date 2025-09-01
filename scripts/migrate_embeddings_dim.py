@@ -30,7 +30,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import List
 
 try:
     import psycopg
@@ -51,12 +50,12 @@ def _target_dim() -> int:
         return 768
 
 
-def _vec_text(vec: List[float]) -> str:
+def _vec_text(vec: list[float]) -> str:
     # pgvector textual format: '[x,y,z]'
     return "[" + ",".join(f"{x:.8f}" for x in vec) + "]"
 
 
-def _embed_batch(texts: List[str]) -> List[List[float]]:
+def _embed_batch(texts: list[str]) -> list[list[float]]:
     # Reuse semtools provider plumbing
     from tools.semtools import embed_texts
     return embed_texts(texts)
@@ -81,7 +80,7 @@ def migrate_rag_chunks(conn: psycopg.Connection, batch_size: int = 100) -> None:
                 """,
                 (batch_size,),
             )
-            rows: List[dict] = cur.fetchall()
+            rows: list[dict] = cur.fetchall()
         if not rows:
             break
         texts = [r["text"] for r in rows]

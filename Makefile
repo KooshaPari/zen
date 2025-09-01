@@ -55,6 +55,37 @@ ingest-nomic:
 		ZEN_PG_DSN=$${ZEN_PG_DSN:-postgresql://postgres:postgres@localhost:5432/zen} \
 		python scripts/semtools_cli.py --work-dir . --glob "**/*.md" --collection knowledge --provider $${EMBEDDINGS_PROVIDER:-ollama} --model $${OLLAMA_EMBED_MODEL:-nomic-embed-text} --dim $${RAG_VECTOR_DIM:-768}
 
+# --- App servers ---
+.PHONY: mcp mcp0
+
+mcp:
+	@echo "[mcp] Starting MCP HTTP server (Streamable via deployer)"
+	@if [ -x ./.zen_venv/bin/python ]; then PY=./.zen_venv/bin/python; else PY=python; fi; \
+		PORT=$${PORT:-8080} DISABLE_TUNNEL=1 $$PY deploy_mcp_http.py --port-strategy env
+
+mcp0:
+	@echo "[mcp] Starting MCP HTTP server on a dynamic port with tunnel (if available)"
+	@if [ -x ./.zen_venv/bin/python ]; then PY=./.zen_venv/bin/python; else PY=python; fi; \
+		$$PY deploy_mcp_http.py --port-strategy dynamic --tunnel  --domain zen.kooshapari.com
+	
+
+# --- Meili index helper ---
+.PHONY: meili-index
+meili-index:
+	@echo "[meili] Indexing rag_chunks (knowledge) into Meilisearch"
+	BM25_BACKEND=meili python - <<-'PY'
+	from tools.semtools_indexer import index_ingested_docs, os_index_name
+	from tools.semtools import _connect, namespace_from_scope
+	scope={'work_dir':'.'}
+	ns=namespace_from_scope(scope)
+	with _connect() as conn, conn.cursor() as cur:
+	    cur.execute("SELECT id, text, metadata FROM rag_chunks WHERE namespace=%s AND collection=%s LIMIT 1000", (ns,'knowledge'))
+	    rows = cur.fetchall()
+	docs=[{'id': i, 'text': t, 'metadata': m} for (i,t,m) in rows]
+	index_ingested_docs(docs, scope, collection='knowledge')
+	print('Indexed to Meili:', os_index_name(ns, 'knowledge'))
+	PY
+
 # Convenience targets for RabbitMQ + tests
 .PHONY: dev-lite-up-rabbitmq test-unit test-http test-rabbitmq
 
@@ -65,7 +96,7 @@ test-unit:
 	PYTHONPATH=. pytest -m "not integration" -q
 
 test-http:
-	PYTHONPATH=. pytest -q -k "http_endpoints_router_messaging or http_tasks_csv or models_catalog_endpoint"
+	PYTHONPATH=. RUN_HTTP_TESTS=1 pytest -q -k "http_mcp_semtools"
 
 test-rabbitmq:
 	PYTHONPATH=. pytest -q tests/integration/test_rabbitmq_queue.py

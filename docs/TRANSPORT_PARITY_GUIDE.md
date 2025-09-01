@@ -122,6 +122,8 @@ The XML protocol adapts to different agent types:
 
 ## 🔧 Transport-Specific Usage
 
+Note: The STDIO server (`server.py`) is archived. This guide remains for historical parity; prefer the Streamable HTTP MCP server (`server_mcp_http.py`).
+
 ### 1. STDIO Transport (server.py)
 
 **Setup:**

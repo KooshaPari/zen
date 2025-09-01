@@ -80,5 +80,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 
-# Default command
-CMD ["python", "server.py"]
+# Default command: Streamable MCP HTTP via deployer
+# Uses PORT env var for binding (default 8080)
+ENV PORT=8080
+CMD ["python", "deploy_mcp_http.py", "--port-strategy", "env"]

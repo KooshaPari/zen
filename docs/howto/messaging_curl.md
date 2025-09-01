@@ -1,7 +1,9 @@
 # Messaging API — Quick curl guide (MVP)
 
+Deprecated (Legacy REST): These examples use the legacy `server_http.py` endpoints. The active server is Streamable HTTP MCP via `/mcp`. For current usage, integrate messaging through tools or consume global SSE at `/events/live`.
+
 Prereqs
-- Server running (server_http.py): default http://127.0.0.1:8080
+- Server running: http://127.0.0.1:8080
 - Optional: HTTP_API_KEY set; if so, add header `Authorization: Bearer $HTTP_API_KEY`
 - Optional: Redis enabled for persistence (`ZEN_STORAGE=redis`), NATS for events (`ZEN_EVENT_BUS=nats`)
 
@@ -94,4 +96,3 @@ Notes
 - Feature flags: ZEN_STORAGE=redis, ZEN_EVENT_BUS=nats, ZEN_MSG_INJECTION=1
 - Redis keys under inbox:agent:<id>:unread (ZSET), messages:* namespaces
 - In-memory fallback works without Redis but does not persist across runs
-

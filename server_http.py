@@ -17,11 +17,10 @@ Implements minimal endpoints used by tests:
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import time
 import uuid
-from typing import Any, Dict, List
+from typing import Any
 
 from aiohttp import web
 
@@ -30,7 +29,7 @@ def build_app() -> web.Application:
     app = web.Application()
 
     # In-memory state
-    state: Dict[str, Any] = {
+    state: dict[str, Any] = {
         "channels": {},            # id -> channel
         "messages": {},            # id -> message
         "resume_index": {},        # resume_token -> message_id
@@ -44,7 +43,7 @@ def build_app() -> web.Application:
     def _uuid() -> str:
         return str(uuid.uuid4())
 
-    def _json(request: web.Request) -> Dict[str, Any]:
+    def _json(request: web.Request) -> dict[str, Any]:
         return request.get("_json_cache")  # set by middleware
 
     @web.middleware
@@ -139,7 +138,7 @@ def build_app() -> web.Application:
             msg["resolved"] = True
         return web.json_response({"ok": True, "reply_id": reply_id})
 
-    def _compute_tasks_csv_and_etag(tasks: List[Dict[str, Any]]):
+    def _compute_tasks_csv_and_etag(tasks: list[dict[str, Any]]):
         header = [
             "task_id",
             "agent_type",
@@ -181,7 +180,7 @@ def build_app() -> web.Application:
         }
         state["tasks"].append(t)
 
-        resp: Dict[str, Any] = {"task_id": t["task_id"], "status": "accepted"}
+        resp: dict[str, Any] = {"task_id": t["task_id"], "status": "accepted"}
         if os.getenv("ZEN_ROUTER_ENABLE", "0").lower() in ("1", "true", "yes") and t["model"].lower() == "auto":
             resp["router"] = {
                 "chosen_model": "gemini-2.5-flash",

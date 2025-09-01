@@ -7,23 +7,19 @@
   <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:2rem} a{color:#06c}</style>
 </head>
 <body>
-  <h1>Zen MCP HTTP API</h1>
-  <p>Welcome. Useful links:</p>
+  <h1>Zen MCP Streamable HTTP</h1>
+  <p>Welcome. Useful links (MCP transport):</p>
   <ul>
-    <li><a href="/openapi.json">OpenAPI JSON</a></li>
-    <li><a href="/tools.schema.json">Tools JSON Schema</a></li>
-    <li><a href="/viewer">SSE Viewer</a></li>
-    <li><a href="/events">/events (polling snapshot SSE)</a></li>
-    <li><a href="/events/bus">/events/bus (event bus SSE)</a></li>
-    <li><a href="/events/agg">/events/agg (aggregated snapshot SSE)</a></li>
-    <li><a href="/tasks">/tasks (JSON)</a> | <a href="/tasks.csv">/tasks.csv (CSV)</a></li>
+    <li><a href="/mcp">/mcp (MCP JSON-RPC over HTTP)</a></li>
+    <li><a href="/stream/example">/stream/{task_id} (SSE by task)</a></li>
+    <li><a href="/events/live">/events/live (global SSE)</a></li>
+    <li><a href="/static/viewer.html">SSE Viewer</a></li>
   </ul>
   <h3>Environment toggles</h3>
   <ul>
-    <li>HTTP_API_KEY (optional) for API-key auth via X-API-Key</li>
-    <li>USE_REDIS=1 and REDIS_URL or REDIS_HOST/REDIS_PORT/REDIS_DB_CONVERSATIONS</li>
-    <li>HTTP_HOST and HTTP_PORT for server binding</li>
+    <li>ENABLE_OAUTH2_AUTH=true|false (default true)</li>
+    <li>CORS_ALLOW_ORIGINS for browser access</li>
+    <li>PORT for server binding (default 8080)</li>
   </ul>
 </body>
 </html>
-

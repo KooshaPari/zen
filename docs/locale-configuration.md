@@ -80,6 +80,7 @@ system_prompt = language_instruction + base_system_prompt
    ```
 2. Restart the MCP server:
    ```bash
+   # Archived STDIO server; prefer `python server_mcp_http.py`
    python server.py
    ```
 3. Use any tool – responses will be in the specified language.

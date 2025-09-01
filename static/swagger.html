@@ -3,17 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Zen MCP Swagger UI</title>
+  <title>Zen MCP Swagger UI (Legacy REST)</title>
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" />
 </head>
 <body>
+  <div style="padding:12px;background:#fff3cd;border:1px solid #ffeeba;border-radius:6px;margin:12px 0;">
+    <strong>Deprecated:</strong> This Swagger UI documents the legacy REST server. Prefer MCP over <code>/mcp</code>.
+  </div>
   <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
-  <script>
-    window.onload = () => {
-      window.ui = SwaggerUIBundle({ url: '/openapi.json', dom_id: '#swagger-ui' });
-    };
-  </script>
+  <!-- Swagger UI disabled: legacy REST spec archived -->
 </body>
 </html>
-

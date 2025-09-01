@@ -27,6 +27,7 @@ This document summarizes the implementation of basic improvements to bring LLMs 
 - Features: conversation memory, file/image context, tool calling, quality checks
 
 ### 3. Enhanced LLM Task Handler ✅
+Deprecated: Legacy REST details below reference `server_http.py`. Prefer MCP `/mcp` with tools/call for LLM invocations.
 **File**: `server_http.py` (enhanced `handle_llm_task_create`)
 - **Conversation Memory Integration**: Multi-turn conversations with continuation_id
 - **File Context Support**: Process multiple files with automatic content handling
@@ -36,6 +37,7 @@ This document summarizes the implementation of basic improvements to bring LLMs 
 - **Usage Tracking**: Token usage, cost per 1M tokens, conversation metrics
 
 ### 4. Batch Processing Support ✅
+Deprecated: Legacy REST.
 **File**: `server_http.py` (new `handle_llm_batch_create`)
 - **Parallel Execution**: Concurrent processing of multiple LLM tasks
 - **Sequential Execution**: Ordered processing for dependent tasks

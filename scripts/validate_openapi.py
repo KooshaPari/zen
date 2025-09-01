@@ -11,7 +11,8 @@ def main() -> int:
         print("openapi-spec-validator not installed; skipping validation")
         return 0
 
-    root = Path(__file__).resolve().parent.parent / "openapi" / "openapi.json"
+    # Validate archived legacy spec
+    root = Path(__file__).resolve().parent.parent / "archive" / "openapi" / "openapi.json"
     if not root.exists():
         print(f"OpenAPI file not found at {root}")
         return 1
@@ -27,4 +28,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

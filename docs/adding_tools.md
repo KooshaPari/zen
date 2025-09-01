@@ -90,8 +90,8 @@ class DebugTool(WorkflowTool):
 
 ### Registration
 1. Create system prompt in `systemprompts/`
-2. Import in `server.py` 
-3. Add to `TOOLS` dictionary
+2. Import/register in the HTTP MCP server (`server_mcp_http.py`)
+3. Add to the tool registry so it appears in `tools/list`
 
 ## Testing Your Tool
 
@@ -134,4 +134,3 @@ python communication_simulator_test.py --quick
 - **Workflow Tool**: `tools/debug.py` - Multi-step investigation with expert analysis
 
 **Recommendation**: Start with existing tools as templates and explore the base classes to understand available hooks and methods.
-

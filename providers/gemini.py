@@ -170,6 +170,11 @@ class GeminiModelProvider(ModelProvider):
         **kwargs,
     ) -> ModelResponse:
         """Generate content using Gemini model."""
+        # Ensure Google GenAI SDK is available early to avoid attribute errors
+        if not _HAS_GOOGLE_GENAI or types is None:
+            raise RuntimeError(
+                "Google GenAI API client not available. Install google-genai and set a valid API key."
+            )
         # Validate parameters
         resolved_name = self._resolve_model_name(model_name)
         self.validate_parameters(model_name, temperature)
