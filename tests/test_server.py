@@ -3,7 +3,6 @@ Tests for the main server functionality
 """
 
 import pytest
-
 from server import handle_call_tool
 
 

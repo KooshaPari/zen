@@ -117,6 +117,12 @@ class DebugIssueTool(WorkflowTool):
     including race conditions, memory leaks, performance issues, and integration problems.
     """
 
+    def get_annotations(self):
+        return {
+            "category": "analysis",
+            "tags": ["debug", "investigation", "workflow"],
+            "readOnlyHint": True,
+        }
     def __init__(self):
         super().__init__()
         self.initial_issue = None
@@ -125,11 +131,17 @@ class DebugIssueTool(WorkflowTool):
         return "debug"
 
     def get_description(self) -> str:
-        return (
-            "Performs systematic debugging and root cause analysis for any type of issue. "
-            "Use for complex bugs, mysterious errors, performance issues, race conditions, memory leaks, and integration problems. "
-            "Guides through structured investigation with hypothesis testing and expert analysis."
-        )
+        return """🐛 DEBUG - Systematic debugging and root cause analysis.
+
+Use this tool to:
+• 🔍 BUG HUNTING: Investigate complex bugs and mysterious errors
+• ⚡ PERFORMANCE: Diagnose slow code, memory leaks, bottlenecks
+• 🔄 RACE CONDITIONS: Find timing issues and concurrency problems
+• 🧪 HYPOTHESIS TESTING: Systematic investigation with scientific method
+• 📊 EVIDENCE ANALYSIS: Gather and analyze logs, stack traces, metrics
+• 🎯 ROOT CAUSE: Get to the real source of problems, not just symptoms
+
+WHEN TO USE: When you have mysterious bugs, performance issues, or complex problems that need structured investigation rather than guessing."""
 
     def get_system_prompt(self) -> str:
         return DEBUG_ISSUE_PROMPT

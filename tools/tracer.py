@@ -118,6 +118,12 @@ class TracerRequest(WorkflowRequest):
     backtrack_from_step: Optional[int] = Field(
         default=None, exclude=True, description="Tracing doesn't use backtracking"
     )
+    def get_annotations(self):
+        return {
+            "category": "analysis",
+            "tags": ["tracer", "dependencies", "workflow"],
+            "readOnlyHint": True,
+        }
 
     # Exclude other non-tracing fields
     temperature: Optional[float] = Field(default=None, exclude=True)

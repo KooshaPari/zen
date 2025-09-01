@@ -1,0 +1,127 @@
+{
+  "schemas": {
+    "AgentType": {
+      "type": "string",
+      "enum": ["claude","goose","aider","codex","gemini","amp","cursor-agent","cursor","auggie","custom"]
+    },
+    "TaskStatus": {
+      "type": "string",
+      "enum": ["pending","starting","running","completed","failed","timeout","cancelled"]
+    },
+    "AgentTaskRequest": {
+      "type": "object",
+      "properties": {
+        "agent_type": {"$ref": "#/schemas/AgentType"},
+        "task_description": {"type": "string"},
+        "message": {"type": "string"}
+      },
+      "required": ["agent_type","task_description","message"],
+      "additionalProperties": true
+    },
+    "AgentTaskResult": {
+      "type": "object",
+      "properties": {
+        "task_id": {"type": "string"},
+        "agent_type": {"$ref": "#/schemas/AgentType"},
+        "status": {"$ref": "#/schemas/TaskStatus"},
+        "output": {"type": "string"},
+        "error": {"type": "string", "nullable": true},
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": "string", "format": "date-time", "nullable": true}
+      },
+      "required": ["task_id","agent_type","status","started_at"],
+      "additionalProperties": true
+    },
+    "AgentTask": {
+      "type": "object",
+      "properties": {
+        "task_id": {"type": "string"},
+        "request": {"$ref": "#/schemas/AgentTaskRequest"},
+        "status": {"$ref": "#/schemas/TaskStatus"},
+        "result": {"$ref": "#/schemas/AgentTaskResult"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "updated_at": {"type": "string", "format": "date-time"}
+      },
+      "required": ["task_id","request","status","created_at","updated_at"]
+    },
+    "MessageRecord": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "type": {"type": "string", "enum": ["channel","dm","thread"]},
+        "channel_id": {"type": "string"},
+        "members": {"type": "array", "items": {"type": "string"}},
+        "from": {"type": "string"},
+        "body": {"type": "string"},
+        "mentions": {"type": "array", "items": {"type": "string"}},
+        "blocking": {"type": "boolean"},
+        "resume_token": {"type": "string"},
+        "resolved": {"type": "boolean"},
+        "resolved_ts": {"type": "integer"},
+        "ts": {"type": "integer"}
+      },
+      "required": ["id","type","from","body","ts"]
+    },
+    "ChannelHistory": {
+      "type": "object",
+      "properties": {
+        "channel_id": {"type": "string"},
+        "messages": {"type": "array", "items": {"$ref": "#/schemas/MessageRecord"}}
+      }
+    },
+    "DMHistory": {
+      "type": "object",
+      "properties": {
+        "members": {"type": "array", "items": {"type": "string"}},
+        "messages": {"type": "array", "items": {"$ref": "#/schemas/MessageRecord"}}
+      }
+    },
+    "InboxSummary": {
+      "type": "object",
+      "properties": {
+        "agent_id": {"type": "string"},
+        "unread": {"type": "object", "properties": {"total": {"type": "integer"}}},
+        "items": {"type": "array", "items": {"$ref": "#/schemas/MessageRecord"}}
+      }
+    },
+    "RouterDecision": {
+      "type": "object",
+      "properties": {
+        "chosen_model": {"type": "string"},
+        "candidates": {"type": "array", "items": {"type": "string"}},
+        "tier": {"type": "string"},
+        "budgets": {"type": "object", "properties": {"max_tokens": {"type": "integer"}, "temperature": {"type": "number"}}},
+        "plan": {"type": "object"}
+      },
+      "required": ["chosen_model","candidates","budgets","plan"]
+    },
+    "A2AEnvelope": {
+      "type": "object",
+      "properties": {
+        "message_id": {"type": "string"},
+        "sender_id": {"type": "string"},
+        "receiver_id": {"type": "string","nullable": true},
+        "message_type": {"type": "string"},
+        "timestamp": {"type": "string"},
+        "payload": {"type": "object"},
+        "correlation_id": {"type": "string","nullable": true},
+        "ttl_seconds": {"type": "integer"},
+        "priority": {"type": "integer"}
+      },
+      "required": ["message_id","sender_id","message_type","timestamp","payload"]
+    },
+    "AgentCard": {
+      "type": "object",
+      "properties": {
+        "agent_id": {"type": "string"},
+        "name": {"type": "string"},
+        "version": {"type": "string"},
+        "organization": {"type": "string"},
+        "endpoint_url": {"type": "string"},
+        "capabilities": {"type": "array", "items": {"type": "object"}},
+        "last_seen": {"type": "string"}
+      },
+      "required": ["agent_id","name","version","endpoint_url","capabilities","last_seen"]
+    }
+  }
+}

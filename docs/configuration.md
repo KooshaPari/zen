@@ -30,7 +30,7 @@ OPENAI_API_KEY=your-openai-key
 GEMINI_API_KEY=your_gemini_api_key_here
 # Get from: https://makersuite.google.com/app/apikey
 
-# OpenAI API  
+# OpenAI API
 OPENAI_API_KEY=your_openai_api_key_here
 # Get from: https://platform.openai.com/api-keys
 
@@ -70,7 +70,7 @@ DEFAULT_MODEL=auto  # Claude picks best model for each task (recommended)
 **Available Models:**
 - **`auto`**: Claude automatically selects the optimal model
 - **`pro`** (Gemini 2.5 Pro): Extended thinking, deep analysis
-- **`flash`** (Gemini 2.0 Flash): Ultra-fast responses  
+- **`flash`** (Gemini 2.0 Flash): Ultra-fast responses
 - **`o3`**: Strong logical reasoning (200K context)
 - **`o3-mini`**: Balanced speed/quality (200K context)
 - **`o4-mini`**: Latest reasoning model, optimized for shorter contexts
@@ -87,7 +87,7 @@ DEFAULT_THINKING_MODE_THINKDEEP=high
 
 # Available modes and token consumption:
 #   minimal: 128 tokens   - Quick analysis, fastest response
-#   low:     2,048 tokens - Light reasoning tasks  
+#   low:     2,048 tokens - Light reasoning tasks
 #   medium:  8,192 tokens - Balanced reasoning
 #   high:    16,384 tokens - Complex analysis (recommended for thinkdeep)
 #   max:     32,768 tokens - Maximum reasoning depth
@@ -104,10 +104,27 @@ Control which models can be used from each provider for cost control, compliance
 # OpenAI model restrictions
 OPENAI_ALLOWED_MODELS=o3-mini,o4-mini,mini
 
-# Gemini model restrictions  
+# Gemini model restrictions
 GOOGLE_ALLOWED_MODELS=flash,pro
 
 # X.AI GROK model restrictions
+
+#### OpenRouter Cost Guard
+
+You can globally restrict OpenRouter models by their total token price:
+
+```env
+# Per 1K tokens, input+output combined. Set to 0 for only free models.
+# -1 disables the guard (default)
+OPENROUTER_MAX_COST_PER_1K_TOTAL=0.5
+```
+
+Notes:
+- Models without pricing in conf/custom_models.json are allowed unless threshold is 0 (free-only) in which case they are blocked.
+- The guard is applied to:
+  - Model validation and listing
+  - Actual generate_content calls (will raise ValueError if exceeding threshold)
+```
 XAI_ALLOWED_MODELS=grok-3,grok-3-fast,grok-4-latest
 
 # OpenRouter model restrictions (affects models via custom provider)
@@ -163,8 +180,8 @@ CUSTOM_MODELS_CONFIG_PATH=/path/to/your/custom_models.json
 **Conversation Settings:**
 ```env
 # How long AI-to-AI conversation threads persist in memory (hours)
-# Conversations are auto-purged when claude closes its MCP connection or 
-# when a session is quit / re-launched 
+# Conversations are auto-purged when claude closes its MCP connection or
+# when a session is quit / re-launched
 CONVERSATION_TIMEOUT_HOURS=5
 
 # Maximum conversation turns (each exchange = 2 turns)
@@ -245,3 +262,33 @@ LOG_LEVEL=INFO
 - **[Advanced Usage Guide](advanced-usage.md)** - Advanced model usage patterns, thinking modes, and power user workflows
 - **[Context Revival Guide](context-revival.md)** - Conversation persistence and context revival across sessions
 - **[AI-to-AI Collaboration Guide](ai-collaboration.md)** - Multi-model coordination and conversation threading
+### Embeddings Configuration (Dev vs Prod)
+
+Use local ARM64-native embeddings in development, and cost-effective hosted embeddings in production via OpenRouter.
+
+```env
+# Select provider: tei | ollama | openrouter
+EMBEDDINGS_PROVIDER=ollama
+
+# TEI-compatible endpoint (when EMBEDDINGS_PROVIDER=tei)
+TEI_URL=http://localhost:8082
+
+# Ollama (ARM64-native) — local embeddings
+OLLAMA_URL=http://localhost:11434
+OLLAMA_EMBED_MODEL=nomic-embed-text  # or bge-m3, snowflake-arctic-embed
+
+# OpenRouter (prod) — hosted embeddings
+OPENROUTER_API_KEY=your_openrouter_api_key
+EMBEDDINGS_MODEL_OPENROUTER=text-embedding-3-small  # pick a cost-effective model
+
+# Vector dimension for pgvector (must match chosen model)
+# bge-small-en-v1.5 → 384
+# nomic-embed-text  → 768 (recommended dev default)
+# text-embedding-3-small → 1536
+RAG_VECTOR_DIM=768
+```
+
+Notes:
+- Ensure `RAG_VECTOR_DIM` matches the embedding model dimension. The ingest tool will create the table with that dimension.
+- For Ollama, pre-pull models using the `ollama-init` helper or `ollama pull <model>`.
+- For simple faceted search in dev, enable Meilisearch with `--profile search-lite`.

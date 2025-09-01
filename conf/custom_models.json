@@ -29,6 +29,8 @@
       "supports_images": "Whether the model can process images/visual input",
       "max_image_size_mb": "Maximum total size in MB for all images combined (capped at 40MB max for custom models)",
       "supports_temperature": "Whether the model accepts temperature parameter in API calls (set to false for O3/O4 reasoning models)",
+      "input_cost_per_1k": "Optional number: input price per 1K tokens (USD)",
+      "output_cost_per_1k": "Optional number: output price per 1K tokens (USD)",
       "temperature_constraint": "Type of temperature constraint: 'fixed' (fixed value), 'range' (continuous range), 'discrete' (specific values), or omit for default range",
       "is_custom": "Set to true for models that should ONLY be used with custom API endpoints (Ollama, vLLM, etc.). False or omitted for OpenRouter/cloud models.",
       "description": "Human-readable description of the model"

@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Zen MCP API Docs</title>
+  <style>html,body,#redoc{height:100%;margin:0;padding:0}</style>
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+</head>
+<body>
+  <redoc spec-url="/openapi.json"></redoc>
+  <script>
+    // Add a simple helper section for ContentPart usage
+    document.addEventListener('DOMContentLoaded', () => {
+      const tip = document.createElement('div');
+      tip.style.cssText = 'position:fixed;right:12px;bottom:12px;max-width:520px;background:#f6f8fa;border:1px solid #d0d7de;border-radius:8px;padding:12px;font:14px system-ui;box-shadow:0 2px 12px rgba(0,0,0,.08)';
+      tip.innerHTML = `<strong>Tip: Structured message content</strong><br/>
+      Message.content can be a string or an array of parts:<br/>
+      <code>[{type:"text", text:"hello"}, {type:"image_url", image_url:"https://..."}, {type:"tool_call", tool_name:"search", tool_args:{q:"..."}}, {type:"tool_result", tool_result:{...}}, {type:"file", file_name:"report.pdf", file_url:"https://..."}, {type:"file_inline", file_name:"snippet.txt", file_bytes_b64:"..."}]</code><br/>
+      See OpenAPI components → Message and ContentPart for the schema and an example.`;
+      document.body.appendChild(tip);
+    });
+  </script>
+</body>
+</html>
+

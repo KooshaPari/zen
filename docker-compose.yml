@@ -1,4 +1,51 @@
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - zen-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"    # External (host) access
+      - "29092:29092"  # Internal (container-to-container) access
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - zen-network
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERCONNECT: kafka:29092
+      JVM_OPTS: -Xms128M -Xmx256M
+      SERVER_SERVLET_CONTEXTPATH: /
+    ports:
+      - "19000:9000"
+    networks:
+      - zen-network
   zen-mcp:
     build:
       context: .
@@ -20,18 +67,18 @@ services:
       - DEFAULT_MODEL=${DEFAULT_MODEL:-auto}
       
       # API Keys (use Docker secrets in production)
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - XAI_API_KEY=${XAI_API_KEY}
-      - DIAL_API_KEY=${DIAL_API_KEY}
-      - DIAL_API_HOST=${DIAL_API_HOST}
-      - DIAL_API_VERSION=${DIAL_API_VERSION}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - CUSTOM_API_URL=${CUSTOM_API_URL}
-      - CUSTOM_API_KEY=${CUSTOM_API_KEY}
-      - CUSTOM_MODEL_NAME=${CUSTOM_MODEL_NAME}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - XAI_API_KEY=${XAI_API_KEY:-}
+      - DIAL_API_KEY=${DIAL_API_KEY:-}
+      - DIAL_API_HOST=${DIAL_API_HOST:-}
+      - DIAL_API_VERSION=${DIAL_API_VERSION:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - CUSTOM_API_URL=${CUSTOM_API_URL:-}
+      - CUSTOM_API_KEY=${CUSTOM_API_KEY:-}
+      - CUSTOM_MODEL_NAME=${CUSTOM_MODEL_NAME:-}
       
       # Logging configuration
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -40,13 +87,15 @@ services:
       
       # Advanced configuration
       - DEFAULT_THINKING_MODE_THINKDEEP=${DEFAULT_THINKING_MODE_THINKDEEP:-high}
-      - DISABLED_TOOLS=${DISABLED_TOOLS}
-      - MAX_MCP_OUTPUT_TOKENS=${MAX_MCP_OUTPUT_TOKENS}
+      - DISABLED_TOOLS=${DISABLED_TOOLS:-}
+      - MAX_MCP_OUTPUT_TOKENS=${MAX_MCP_OUTPUT_TOKENS:-}
       
       # Server configuration
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
       - TZ=${TZ:-UTC}
+      # Kafka bootstrap (in-container). Override to localhost:9092 when running server on host
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
     
     # Volumes for persistent data
     volumes:
@@ -57,6 +106,8 @@ services:
     # Network configuration
     networks:
       - zen-network
+    depends_on:
+      - kafka
     
     # Resource limits
     deploy:

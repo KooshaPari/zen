@@ -1,0 +1,1562 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Zen MCP HTTP API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {
+    "/status": {
+      "get": {
+        "summary": "Aggregated status",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/{task_id}": {
+      "get": {
+        "summary": "Get task JSON",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTask"
+                },
+                "example": {
+                  "task_id": "abc-123",
+                  "request": {
+                    "agent_type": "claude",
+                    "task_description": "Summarize repo",
+                    "message": "Summarize this repo"
+                  },
+                  "status": "running",
+                  "created_at": "2025-08-28T12:00:00Z",
+                  "updated_at": "2025-08-28T12:05:00Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "task_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks": {
+      "get": {
+        "summary": "List tasks",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "agent",
+            "schema": {
+              "$ref": "#/components/schemas/AgentType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated TaskStatus values"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          {
+            "in": "query",
+            "name": "created_after",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "created_before",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at:asc",
+                "created_at:desc",
+                "status"
+              ]
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-None-Match",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Optional ETag for conditional GET"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "example": {
+                  "total": 1,
+                  "page": 1,
+                  "limit": 1,
+                  "items": [
+                    {
+                      "task_id": "abc-123",
+                      "agent_port": 3333,
+                      "status": "running",
+                      "request": {
+                        "agent_type": "claude",
+                        "task_description": "Summarize repo"
+                      },
+                      "created_at": "2025-08-28T12:00:00Z",
+                      "updated_at": "2025-08-28T12:05:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified"
+          }
+        }
+      }
+    },
+    "/tasks.csv": {
+      "get": {
+        "summary": "List tasks as CSV",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "agent",
+            "schema": {
+              "$ref": "#/components/schemas/AgentType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated TaskStatus values"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "in": "query",
+            "name": "created_after",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "created_before",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "created_at:asc",
+                "created_at:desc",
+                "status"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "fields",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional CSV columns: task_id,agent,status,description,created_at,updated_at,agent_port"
+          },
+          {
+            "in": "header",
+            "name": "If-None-Match",
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "description": "Optional ETag for conditional GET"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV",
+            "content": {
+              "text/plain": {
+                "example": "task_id,agent,status\nabc-123,claude,running\n"
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified"
+          }
+        }
+      }
+    },
+    "/tasks/{task_id}/stream": {
+      "get": {
+        "summary": "SSE stream of task status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {"type": "string"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE text/event-stream"
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "summary": "SSE aggregated snapshots (default)",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "agent",
+            "schema": {
+              "$ref": "#/components/schemas/AgentType"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated TaskStatus values"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE"
+          }
+        }
+      }
+    },
+    "/events/bus": {
+      "get": {
+        "summary": "SSE via event bus (low-latency)",
+        "responses": {
+          "200": {
+            "description": "SSE"
+          }
+        }
+      }
+    },
+    "/events/agg": {
+      "get": {
+        "summary": "SSE aggregated snapshots",
+        "responses": {
+          "200": {
+            "description": "SSE"
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Performance metrics",
+        "responses": {
+          "200": {
+            "description": "Metrics JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/viewer": {
+      "get": {
+        "summary": "HTML Viewer",
+        "responses": {
+          "200": {
+            "description": "HTML"
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "This document",
+        "responses": {
+          "200": {
+            "description": "OpenAPI"
+          }
+        }
+      }
+    },
+    "/tools.schema.json": {
+      "get": {
+        "summary": "Tools JSON Schema",
+        "responses": {
+          "200": {
+            "description": "JSON Schema"
+          }
+        }
+      }
+    },
+    "/router/decide": {
+      "post": {
+        "summary": "Decide routing (debug)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string"
+                  },
+                  "task_type": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Decision",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "decision": {
+                      "$ref": "#/components/schemas/RouterDecision"
+                    }
+                  }
+                },
+                "example": {
+                  "decision": {
+                    "chosen_model": "gemini-2.5-flash",
+                    "candidates": [
+                      "gemini-2.5-flash",
+                      "o4-mini"
+                    ],
+                    "budgets": {
+                      "max_tokens": 4096,
+                      "temperature": 0.3
+                    },
+                    "plan": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages/channel": {
+      "post": {
+        "summary": "Post a channel message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "channel_id": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  },
+                  "mentions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "blocking": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:write"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "postChannelMessage"
+      }
+    },
+    "/messages/channel/{channel_id}/history": {
+      "get": {
+        "summary": "Channel history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "channel_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChannelHistory"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:read"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getChannelHistory"
+      }
+    },
+    "/messages/dm": {
+      "post": {
+        "summary": "Post a direct message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "a": {
+                    "type": "string"
+                  },
+                  "b": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  },
+                  "blocking": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:write"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "postDmMessage"
+      }
+    },
+    "/messages/dm/{a}/{b}/history": {
+      "get": {
+        "summary": "DM history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "a",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "b",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DMHistory"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:read"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getDmHistory"
+      }
+    },
+    "/inbox/messages": {
+      "get": {
+        "summary": "Unread summary and items",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxSummary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:read"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getInboxMessages"
+      }
+    },
+    "/messages/resume": {
+      "post": {
+        "summary": "Resolve a blocking message by id",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message_id": {
+                    "type": "string"
+                  },
+                  "agent_id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:write"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "resumeMessage"
+      }
+    },
+    "/threads/resume": {
+      "post": {
+        "summary": "Resolve by resume_token and optionally reply",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "resume_token": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "reply_body": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:write"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "resumeThread"
+      }
+    },
+    "/threads/{root_message_id}/history": {
+      "get": {
+        "summary": "Thread history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "root_message_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:read"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "getThreadHistory"
+      }
+    },
+    "/a2a/message": {
+      "post": {
+        "summary": "Handle inbound A2A message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/A2AEnvelope"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/A2AEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "a2a:message"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "a2aMessage"
+      }
+    },
+    "/a2a/advertise": {
+      "post": {
+        "summary": "Advertise agent card",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentCard"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "a2a:advertise"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "a2aAdvertise"
+      }
+    },
+    "/a2a/discover": {
+      "post": {
+        "summary": "Discover agents",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "capability_filter": {
+                    "type": "string"
+                  },
+                  "organization_filter": {
+                    "type": "string"
+                  },
+                  "max_results": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "a2a:discover"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
+        "operationId": "a2aDiscover"
+      }
+    },
+    "/channels": {
+      "post": {
+        "summary": "Create channel",
+        "operationId": "createChannel",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "project_id",
+                  "name"
+                ],
+                "properties": {
+                  "project_id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "project",
+                      "private",
+                      "public"
+                    ]
+                  },
+                  "created_by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "project_id": "proj:alice:1725140000",
+                "name": "dev-chat",
+                "visibility": "project",
+                "created_by": "alice"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:write"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "get": {
+        "summary": "List channels",
+        "operationId": "listChannels",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:read"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/threads/reply": {
+      "post": {
+        "summary": "Reply to a thread",
+        "operationId": "replyThread",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "channel_id",
+                  "root_message_id",
+                  "from",
+                  "body"
+                ],
+                "properties": {
+                  "channel_id": {
+                    "type": "string"
+                  },
+                  "root_message_id": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "channel_id": "ch:proj:dev-chat",
+                "root_message_id": "c:ch:xyz:123",
+                "from": "alice",
+                "body": "ok"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:write"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/messages/stream": {
+      "get": {
+        "summary": "SSE stream of new messages",
+        "operationId": "streamMessages",
+        "responses": {
+          "200": {
+            "description": "SSE stream"
+          }
+        },
+        "security": [
+          {
+            "oauth2": [
+              "comms:read"
+            ]
+          },
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/projects/{project_id}/graph": {
+      "get": {
+        "summary": "Project graph (agents, channels, artifacts count)",
+        "operationId": "getProjectGraph",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "/oauth/authorize",
+            "tokenUrl": "/oauth/token",
+            "scopes": {
+              "comms:read": "Read messaging data",
+              "comms:write": "Write messaging data",
+              "a2a:message": "Send/receive A2A messages",
+              "a2a:discover": "Discover agents",
+              "a2a:advertise": "Advertise agent card"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "AgentType": {
+        "type": "string",
+        "enum": [
+          "claude",
+          "goose",
+          "aider",
+          "codex",
+          "gemini",
+          "amp",
+          "cursor-agent",
+          "cursor",
+          "auggie",
+          "custom"
+        ]
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "starting",
+          "running",
+          "completed",
+          "failed",
+          "timeout",
+          "cancelled"
+        ]
+      },
+      "AgentTaskRequest": {
+        "type": "object",
+        "properties": {
+          "agent_type": {
+            "$ref": "#/components/schemas/AgentType"
+          },
+          "task_description": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_type",
+          "task_description",
+          "message"
+        ],
+        "additionalProperties": true
+      },
+      "AgentTaskResult": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "agent_type": {
+            "$ref": "#/components/schemas/AgentType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "output": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "task_id",
+          "agent_type",
+          "status",
+          "started_at"
+        ],
+        "additionalProperties": true
+      },
+      "AgentTask": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/AgentTaskRequest"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "result": {
+            "$ref": "#/components/schemas/AgentTaskResult"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "task_id",
+          "request",
+          "status",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "MessageRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "channel",
+              "dm",
+              "thread"
+            ]
+          },
+          "channel_id": {
+            "type": "string"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "from": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "mentions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "blocking": {
+            "type": "boolean"
+          },
+          "resume_token": {
+            "type": "string"
+          },
+          "resolved": {
+            "type": "boolean"
+          },
+          "resolved_ts": {
+            "type": "integer"
+          },
+          "ts": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "from",
+          "body",
+          "ts"
+        ]
+      },
+      "ChannelHistory": {
+        "type": "object",
+        "properties": {
+          "channel_id": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageRecord"
+            }
+          }
+        }
+      },
+      "DMHistory": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageRecord"
+            }
+          }
+        }
+      },
+      "InboxSummary": {
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "unread": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageRecord"
+            }
+          }
+        }
+      },
+      "RouterDecision": {
+        "type": "object",
+        "properties": {
+          "chosen_model": {
+            "type": "string"
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tier": {
+            "type": "string"
+          },
+          "budgets": {
+            "type": "object",
+            "properties": {
+              "max_tokens": {
+                "type": "integer"
+              },
+              "temperature": {
+                "type": "number"
+              }
+            }
+          },
+          "plan": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "chosen_model",
+          "candidates",
+          "budgets",
+          "plan"
+        ]
+      },
+      "A2AEnvelope": {
+        "type": "object",
+        "properties": {
+          "message_id": {
+            "type": "string"
+          },
+          "sender_id": {
+            "type": "string"
+          },
+          "receiver_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "message_type": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object"
+          },
+          "correlation_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "ttl_seconds": {
+            "type": "integer"
+          },
+          "priority": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "message_id",
+          "sender_id",
+          "message_type",
+          "timestamp",
+          "payload"
+        ]
+      },
+      "AgentCard": {
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "organization": {
+            "type": "string"
+          },
+          "endpoint_url": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "last_seen": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_id",
+          "name",
+          "version",
+          "endpoint_url",
+          "capabilities",
+          "last_seen"
+        ]
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

@@ -5,7 +5,6 @@ import os
 from unittest.mock import patch
 
 import pytest
-
 from server import (
     apply_tool_filter,
     parse_disabled_tools_env,

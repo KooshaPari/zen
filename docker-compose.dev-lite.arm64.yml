@@ -1,0 +1,48 @@
+# Minimal dev stack for ARM64 (Apple Silicon) including NATS (JetStream) and Redis
+services:
+  nats:
+    image: nats:2.10.14
+    container_name: zen-nats
+    command: ["-js", "-m", "8222", "-p", "4222"]
+    ports:
+      - "${NATS_PORT:-4222}:4222"       # NATS client
+      - "${NATS_MONITOR_PORT:-8222}:8222"   # NATS monitor/JetStream
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - zen-lite
+
+  redis:
+    image: redis:7-alpine
+    container_name: zen-redis
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - zen-lite
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: zen-rabbitmq
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - zen-lite
+
+networks:
+  zen-lite:
+    driver: bridge

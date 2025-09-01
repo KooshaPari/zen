@@ -15,15 +15,15 @@ class ModelProviderRegistry:
 
     _instance = None
 
-    # Provider priority order for model selection
-    # Native APIs first, then custom endpoints, then catch-all providers
+    # Provider priority order for model selection - SORTED BY THROUGHPUT
+    # Fastest providers first for optimal performance
     PROVIDER_PRIORITY_ORDER = [
-        ProviderType.GOOGLE,  # Direct Gemini access
-        ProviderType.OPENAI,  # Direct OpenAI access
-        ProviderType.XAI,  # Direct X.AI GROK access
-        ProviderType.DIAL,  # DIAL unified API access
-        ProviderType.CUSTOM,  # Local/self-hosted models
-        ProviderType.OPENROUTER,  # Catch-all for cloud models
+        ProviderType.CUSTOM,     # Local/self-hosted (fastest - no network latency)
+        ProviderType.GOOGLE,     # Direct Gemini (fast native API)
+        ProviderType.OPENAI,     # Direct OpenAI (fast native API)
+        ProviderType.XAI,        # Direct X.AI GROK (fast native API)
+        ProviderType.DIAL,       # DIAL unified API (aggregated, may add latency)
+        ProviderType.OPENROUTER, # OpenRouter (aggregated, highest latency but most models)
     ]
 
     def __new__(cls):
@@ -368,3 +368,31 @@ class ModelProviderRegistry:
         instance = cls()
         instance._providers.pop(provider_type, None)
         instance._initialized_providers.pop(provider_type, None)
+
+
+# Global registry accessor function
+def get_provider_registry() -> ModelProviderRegistry:
+    """Get the global provider registry instance."""
+    return ModelProviderRegistry()
+
+
+# Register Aegis provider if LangGraph is available
+def _register_aegis_provider():
+    """Register Aegis LangGraph provider if available."""
+    try:
+        from providers.aegis import LANGGRAPH_AVAILABLE, AegisProvider
+
+        if LANGGRAPH_AVAILABLE:
+            ModelProviderRegistry.register_provider(ProviderType.CUSTOM, AegisProvider)
+            logging.info("Registered Aegis LangGraph provider as CUSTOM provider")
+        else:
+            logging.info("LangGraph not available - Aegis provider disabled")
+
+    except ImportError as e:
+        logging.debug(f"Aegis provider not available: {e}")
+    except Exception as e:
+        logging.warning(f"Failed to register Aegis provider: {e}")
+
+
+# Auto-register Aegis provider on module import
+_register_aegis_provider()

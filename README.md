@@ -1,5 +1,11 @@
 # Zen MCP: Many Workflows. One Context.
 
+> Important: Streamable HTTP only
+>
+> The repository is streamlined to the Streamable HTTP MCP server. The legacy STDIO server has been archived under `archive/stdio/`, and the minimal aiohttp HTTP server and the simple KInfra demo deploy script were removed.
+>
+> Use `server_mcp_http.py` (FastAPI) and `deploy_mcp_http.py` to run the server. The previous `zen-mcp-server` STDIO wrapper now lives in `archive/stdio/`.
+
 [zen_web.webm](https://github.com/user-attachments/assets/851e3911-7f06-47c0-a4ab-a2601236697c)
 
 <div align="center">
@@ -102,6 +108,27 @@ cd zen-mcp-server
 ./run-server.sh  
 ```
 
+### Optional: Postgres persistence
+
+Set `ZEN_STORAGE=postgres` and provide a `PG_DSN` (or `PG_HOST/PG_PORT/PG_USER/PG_PASSWORD/PG_DATABASE`).
+This repo includes a simple local Postgres flow:
+
+- Start DB: `make db-up` (uses `postgres:15`)
+- Init schema: `make db-init` (applies `migrations/001_init.sql`)
+- Stop DB: `make db-down`
+
+Example `.env` overrides for local container on a non-default port:
+
+```
+ZEN_STORAGE=postgres
+PG_DSN=postgresql://postgres:postgres@localhost:55432/zen_mcp
+PG_PORT=55432
+```
+
+Messaging stores (channels, DMs, threads) and projects/artifacts persist to Postgres when enabled. Redis and in-memory remain as fallbacks.
+
+To require OAuth for `/status`, set `STATUS_REQUIRE_AUTH=1` with `ENABLE_HTTP_OAUTH=1`.
+
 **Option B: Instant Setup with [uvx](https://docs.astral.sh/uv/getting-started/installation/)**
 ```json
 // Add to ~/.claude/settings.json or .mcp.json
@@ -130,6 +157,49 @@ cd zen-mcp-server
 ```
 
 👉 **[Complete Setup Guide](docs/getting-started.md)** with detailed installation, configuration for Gemini / Codex, and troubleshooting
+
+## Testing & Coverage
+
+- Run unit tests with coverage: `bash scripts/run_coverage_unit.sh`
+- Run E2E/integration tests with coverage: `bash scripts/run_coverage_e2e.sh`
+- Run full combined coverage (unit + E2E) with 100% enforcement: `bash scripts/run_coverage_all.sh`
+
+Notes:
+- Coverage is collected by default on all pytest runs and configured via `.coveragerc`.
+- Combined coverage is enforced at 100% for tracked sources (`tools`, `utils`, `providers`, `systemprompts`, `server`).
+- CI publishes combined coverage artifacts for pull requests.
+
+Parallel execution:
+- Tests run in parallel by default in scripts using `pytest-xdist`.
+- Control worker counts via env vars: `PYTEST_WORKERS` (unit, default `auto`), `PYTEST_WORKERS_INTEGRATION` (E2E, default `2`).
+- Grouping uses `--dist=loadscope` to keep tests in the same module together; override with `PYTEST_DIST` / `PYTEST_DIST_INTEGRATION`.
+
+Test env overrides (.env.tests)
+- The test scripts source `.env.tests` automatically if present, so test-safe values take precedence over `.env`.
+- Create or edit `.env.tests` (already added) to pin infra and disable auth for tests:
+  - `NATS_SERVERS=nats://localhost:4222`
+  - `REDIS_URL=redis://localhost:6379/0`
+  - `ENABLE_HTTP_OAUTH=0`, `ENFORCE_ACL=0`, and empty `HTTP_HMAC_SECRET`
+  - Provider keys empty to avoid hitting live APIs
+
+## Dev Stack (ARM64 Lite)
+
+- Start minimal infra (NATS+JetStream, Redis): `make dev-all-lite`
+- Stop and remove volumes: `make dev-all-lite-down`
+- Tail logs: `make dev-all-lite-logs`
+
+Set these env vars in your shell for local runs/tests:
+```
+export NATS_SERVERS=nats://localhost:4222
+export REDIS_URL=redis://localhost:6379/0
+# Ensure HTTP endpoints are open for tests
+export ENFORCE_ACL=0 ENABLE_HTTP_OAUTH=0
+unset HTTP_HMAC_SECRET
+```
+
+Notes:
+- NATS monitor is available at http://localhost:8222 (JetStream enabled).
+- This lite stack avoids Postgres/Arango/Kafka to prevent port collisions and speed up dev.
 
 ## Core Tools
 

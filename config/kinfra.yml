@@ -1,0 +1,231 @@
+# KInfra Configuration for Zen MCP Server
+# This file configures KInfra's tunnel management and networking behavior
+
+# Network Configuration
+networking:
+  # Port allocation strategy
+  port_strategy: "preferred"  # Options: preferred, dynamic, deterministic, random
+  
+  # Port range for allocation
+  port_range:
+    min: 3000
+    max: 9999
+    
+  # Blocked ports that should never be allocated
+  blocked_ports:
+    - 22    # SSH
+    - 80    # HTTP
+    - 443   # HTTPS
+    - 3306  # MySQL
+    - 5432  # PostgreSQL
+    - 6379  # Redis
+    
+  # Preferred ports for different services
+  service_ports:
+    zen-mcp-server: 8080
+    zen-mcp-http: 8080
+    zen-mcp-dev: 3000
+
+# Tunnel Configuration
+tunnel:
+  # Default tunnel type
+  type: "quick"  # Options: quick, persistent
+  
+  # Default domain for tunnels
+  domain: "zen.kooshapari.com"
+  
+  # Tunnel timeout settings
+  timeout:
+    startup: 60000  # milliseconds
+    health_check: 20000  # milliseconds
+    shutdown: 10000  # milliseconds
+  
+  # Retry configuration
+  retry:
+    max_attempts: 3
+    backoff_factor: 2.0
+    initial_delay: 1.0
+  
+  # Logging configuration
+  logging:
+    level: "info"  # Options: debug, info, warn, error
+    file: "./logs/tunnel.log"
+    max_size: "10MB"
+    max_backups: 5
+
+# Quick Tunnel Configuration
+quick_tunnel:
+  # Auto-generate subdomain
+  auto_subdomain: true
+  
+  # Protocol preference
+  protocol: "http"  # Options: http, https, tcp
+  
+  # Health check settings
+  health_check:
+    enabled: true
+    endpoint: "/healthz"
+    interval: 30  # seconds
+    timeout: 5    # seconds
+
+# Persistent Tunnel Configuration  
+persistent_tunnel:
+  # Credentials file path (relative to project root)
+  credentials_file: "~/.cloudflared/cert.pem"
+  
+  # Configuration template
+  config_template: |
+    tunnel: ${TUNNEL_ID}
+    credentials-file: ${CREDENTIALS_FILE}
+    ingress:
+      - hostname: ${HOSTNAME}
+        service: http://localhost:${PORT}
+      - service: http_status:404
+  
+  # Ingress rules for multiple services
+  ingress_rules:
+    - hostname: "zen.kooshapari.com"
+      service: "http://localhost:${PORT}"
+      path: "/"
+    - service: "http_status:404"
+
+# Service Discovery
+service_discovery:
+  # Enable automatic service detection
+  enabled: true
+  
+  # Common service detection patterns
+  patterns:
+    - port: 3000
+      type: "web"
+      description: "React/Next.js Development"
+    - port: 8080
+      type: "api"
+      description: "HTTP Server/API"
+    - port: 5000
+      type: "web"
+      description: "Flask/Python Web"
+    - port: 8000
+      type: "web"  
+      description: "Django/FastAPI"
+
+# Environment Integration
+environment:
+  # Environment variables that override config
+  overrides:
+    tunnel_domain: "TUNNEL_DOMAIN"
+    tunnel_enabled: "KINFRA_TUNNEL_ENABLED"
+    port: "PORT"
+    log_level: "LOG_LEVEL"
+    
+  # Default environment values
+  defaults:
+    TUNNEL_DOMAIN: "zen.kooshapari.com"
+    KINFRA_TUNNEL_ENABLED: "false"
+    KINFRA_LOG_LEVEL: "info"
+    KINFRA_PORT_STRATEGY: "preferred"
+
+# Security Settings
+security:
+  # Validate tunnel certificates
+  verify_certificates: true
+  
+  # Allow insecure connections (development only)
+  allow_insecure: false
+  
+  # Token-based authentication for persistent tunnels
+  token_auth:
+    enabled: false
+    token_env: "CLOUDFLARE_TUNNEL_TOKEN"
+
+# Performance Settings
+performance:
+  # Connection pool settings
+  connection_pool:
+    max_connections: 10
+    max_keepalive: 5
+    keepalive_timeout: 30
+    
+  # Request timeouts
+  timeouts:
+    connect: 10.0
+    read: 30.0
+    write: 30.0
+    
+  # Buffer sizes
+  buffers:
+    read_buffer: 65536
+    write_buffer: 65536
+
+# Monitoring and Observability
+monitoring:
+  # Enable metrics collection
+  metrics_enabled: true
+  
+  # Metrics export configuration
+  metrics:
+    port: 9090
+    endpoint: "/metrics"
+    format: "prometheus"
+    
+  # Health check configuration
+  health_check:
+    enabled: true
+    port: 8081
+    endpoint: "/health"
+    
+  # Logging configuration
+  logging:
+    format: "json"  # Options: json, text
+    level: "info"
+    output: "stdout"  # Options: stdout, stderr, file
+    
+# Development Settings
+development:
+  # Enable development mode
+  enabled: false
+  
+  # Auto-reload on configuration changes
+  auto_reload: true
+  
+  # Debug logging
+  debug: false
+  
+  # Mock external services
+  mock_services: false
+
+# Production Settings
+production:
+  # Enable production optimizations
+  enabled: false
+  
+  # Use persistent tunnels by default
+  prefer_persistent: true
+  
+  # Enhanced logging
+  audit_logging: true
+  
+  # Health monitoring
+  health_monitoring:
+    enabled: true
+    interval: 60  # seconds
+    alerts:
+      enabled: false
+      webhook_url: ""
+
+# KInfra Library Settings
+library:
+  # Python library path
+  python_path: "./KInfra/libraries/python"
+  
+  # Rust library path (if available)
+  rust_path: "./KInfra/libraries/rust"
+  
+  # Node.js library path (if available)  
+  nodejs_path: "./KInfra/libraries/nodejs"
+  
+  # Preferred library language
+  preferred_language: "python"
+  
+  # Fallback behavior
+  fallback_enabled: true

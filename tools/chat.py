@@ -71,6 +71,12 @@ class ChatTool(SimpleTool):
         from tools.models import ToolModelCategory
 
         return ToolModelCategory.FAST_RESPONSE
+    def get_annotations(self) -> Optional[dict[str, Any]]:
+        return {
+            "category": "conversation",
+            "tags": ["chat", "llm", "conversation"],
+            "readOnlyHint": True,
+        }
 
     def get_request_model(self):
         """Return the Chat-specific request model"""

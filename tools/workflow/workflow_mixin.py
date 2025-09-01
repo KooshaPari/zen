@@ -1491,7 +1491,8 @@ class BaseWorkflowMixin(ABC):
             # Get system prompt for this tool with localization support
             base_system_prompt = self.get_system_prompt()
             language_instruction = self.get_language_instruction()
-            system_prompt = language_instruction + base_system_prompt
+            # Append orchestration tooltip to nudge parallelization via agent_batch
+            system_prompt = language_instruction + base_system_prompt + self.get_orchestration_tooltip()
 
             # Check if tool wants system prompt embedded in main prompt
             if self.should_embed_system_prompt():

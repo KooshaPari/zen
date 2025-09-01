@@ -5,6 +5,67 @@ pydantic>=2.0.0
 python-dotenv>=1.0.0
 importlib-resources>=5.0.0; python_version<"3.9"
 
+# NATS Messaging Infrastructure Dependencies
+nats-py>=2.11.0  # NATS.io client for real-time messaging (standardized client)
+PyYAML>=6.0  # YAML configuration support
+
+# Redis Integration Dependencies (Optional - enhanced integration)
+# redis-py>=5 includes native cluster support via redis.cluster.RedisCluster
+redis>=5.0.0  # Redis client (with cluster support)
+
+# Kafka Event Streaming Dependencies (Optional - install with pip install kafka-python)
+kafka-python>=2.0.2  # Apache Kafka client for event sourcing
+cryptography>=41.0.0  # For audit trail encryption and signatures
+
+# OAuth 2.0 and JWT Dependencies (for auth/oauth2_tokens.py)
+PyJWT>=2.8.0  # JWT token generation and validation
+
+# RabbitMQ Priority Queue Dependencies (Optional - install with pip install aio-pika)
+aio-pika>=9.0.0  # Async RabbitMQ client for priority task queuing
+pika>=1.3.0  # RabbitMQ Python client
+
+# WebSocket Monitoring Dependencies (Optional - install with pip install websockets)
+websockets>=11.0.0  # WebSocket server for real-time dashboard
+psutil>=5.9.0  # System monitoring and resource usage
+
+# HTTP Client Dependencies
+httpx>=0.25.0  # Async HTTP client for A2A protocol
+aiohttp>=3.8.0  # Async HTTP client for workflow approvals
+
+# KInfra Dependencies (for smart port allocation and Cloudflare tunneling)
+# Note: KInfra libraries are bundled in ./KInfra/libraries/python/
+# The following are external dependencies required by KInfra
+dataclasses>=0.6; python_version<"3.7"  # Backport for older Python
+pathlib2>=2.3.0; python_version<"3.4"  # Path handling backport
+typing-extensions>=4.0.0  # Extended type hints
+asyncio-subprocess>=0.1.0; python_version<"3.4"  # Subprocess async backport
+
+# Streaming and Web UI Dependencies (Optional - for progress dashboard)
+fastapi>=0.104.0  # FastAPI web framework for streaming endpoints
+uvicorn[standard]>=0.24.0  # ASGI server for FastAPI
+python-multipart>=0.0.6  # For form data handling
+starlette>=0.27.0  # ASGI framework (dependency of FastAPI)
+
+# Shared Data Infrastructure Dependencies
+# PostgreSQL with pgvector
+asyncpg>=0.29.0  # Async PostgreSQL driver
+psycopg2-binary>=2.9.0  # PostgreSQL adapter with binary wheels
+# psycopg3 for optional Postgres persistence (project/messaging stores)
+psycopg[binary]>=3.1.0
+# Note: For production, use psycopg2 instead of psycopg2-binary
+
+# Embedding Dependencies (Optional - for local embeddings)
+sentence-transformers>=2.2.0  # Local transformer models for embeddings
+# Note: This will install torch, transformers, and other ML dependencies
+
+# Adaptive Learning and ML Dependencies
+torch>=2.0.0  # PyTorch for neural network models
+scikit-learn>=1.3.0  # Machine learning utilities
+scipy>=1.11.0  # Scientific computing and optimization
+tiktoken>=0.5.0  # Token counting for OpenAI models
+numpy>=1.24.0  # Numerical computing
+pandas>=2.0.0  # Data manipulation (for performance analysis)
+
 # Development dependencies (install with pip install -r requirements-dev.txt)
 # pytest>=7.4.0
 # pytest-asyncio>=0.21.0

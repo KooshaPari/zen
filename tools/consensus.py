@@ -118,6 +118,12 @@ class ConsensusRequest(WorkflowRequest):
     thinking_mode: str | None = Field(default=None, exclude=True)
     use_websearch: bool | None = Field(default=None, exclude=True)
 
+    def get_annotations(self):
+        return {
+            "category": "analysis",
+            "tags": ["consensus", "multi-model", "workflow"],
+            "readOnlyHint": True,
+        }
     # Not used in consensus workflow
     files_checked: list[str] | None = Field(default_factory=list, exclude=True)
     relevant_context: list[str] | None = Field(default_factory=list, exclude=True)

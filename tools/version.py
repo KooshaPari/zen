@@ -140,7 +140,16 @@ class VersionTool(BaseTool):
         return "version"
 
     def get_description(self) -> str:
-        return "Get server version, configuration details, and list of available tools."
+        return """ℹ️ VERSION - Get server information and system status.
+
+Use this tool to:
+• 🏷️ CHECK VERSION: See current server version and build info
+• ⚙️ VIEW CONFIG: Get configuration details and environment settings
+• 🛠️ TOOL LIST: See all available tools and their status
+• 📊 SYSTEM STATUS: Check server health and capabilities
+• 🔧 DEBUG INFO: Get technical details for troubleshooting
+
+WHEN TO USE: For diagnostics, troubleshooting, or when you need to know server capabilities and configuration."""
 
     def get_input_schema(self) -> dict[str, Any]:
         """Return the JSON schema for the tool's input"""
@@ -151,8 +160,7 @@ class VersionTool(BaseTool):
         }
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
-        """Return tool annotations indicating this is a read-only tool"""
-        return {"readOnlyHint": True}
+        return {"readOnlyHint": True, "category": "utility", "tags": ["version", "system"]}
 
     def get_system_prompt(self) -> str:
         """No AI model needed for this tool"""
@@ -198,6 +206,7 @@ class VersionTool(BaseTool):
             # We need access to the server instance
             # This is a bit hacky but works for now
             import server as server_module
+
             from utils.client_info import format_client_info, get_client_info_from_context
 
             client_info = get_client_info_from_context(server_module.server)

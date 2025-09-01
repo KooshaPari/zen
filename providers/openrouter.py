@@ -29,6 +29,12 @@ class OpenRouterProvider(OpenAICompatibleProvider):
         "X-Title": os.getenv("OPENROUTER_TITLE", "Zen MCP Server"),
     }
 
+    # Cost threshold (per 1M input+output tokens) — 0 = only free models
+    MAX_COST_TOTAL_PER_1M = float(os.getenv("OPENROUTER_MAX_COST_PER_1M_TOTAL", "-1"))
+    # Live pricing cache (shared across instances)
+    _pricing_cache: dict[str, tuple[float, float]] = {}
+    _pricing_cache_time: float = 0.0
+    PRICING_CACHE_TTL_SEC = int(os.getenv("OPENROUTER_PRICING_CACHE_TTL", "600"))  # 10 minutes default
     # Model registry for managing configurations and aliases
     _registry: Optional[OpenRouterModelRegistry] = None
 
@@ -118,6 +124,75 @@ class OpenRouterProvider(OpenAICompatibleProvider):
         """Get the provider type."""
         return ProviderType.OPENROUTER
 
+    def _within_cost_threshold(self, model_name: str) -> bool:
+        """Check if model's cost is within configured threshold.
+
+        Returns True if no threshold configured or pricing unknown (fail-open unless threshold is 0),
+        otherwise compares (input_cost + output_cost) per 1M to the threshold.
+        """
+        try:
+            max_total = self.MAX_COST_TOTAL_PER_1M
+            if max_total < 0:
+                return True  # no threshold configured
+            config = self._registry.resolve(model_name) if self._registry else None
+            if not config:
+                # Conservative: block unknown pricing when guard enabled (max_total >= 0)
+                return False
+            ic = getattr(config, "input_cost_per_1k", None)
+            oc = getattr(config, "output_cost_per_1k", None)
+            if ic is None and oc is None:
+                # Try live pricing fallback
+                self._refresh_live_pricing()
+                prices = self._pricing_cache.get(model_name) or self._pricing_cache.get(config.model_name)
+                if prices:
+                    ic_live, oc_live = prices
+                    total_live = (ic_live or 0.0) + (oc_live or 0.0)
+                    return total_live * 1000000.0 <= max_total + 1e-12  # convert live per-token to per-1M
+                # Conservative: block unknown pricing when guard enabled
+                return False
+            total = (ic or 0.0) + (oc or 0.0)
+            return total * 1000.0 <= max_total + 1e-12  # convert per-1K config to per-1M comparison
+        except Exception:
+            return True
+
+    def _refresh_live_pricing(self) -> None:
+        """Fetch live pricing from OpenRouter models endpoint and cache per-1K costs.
+
+        Stores prompt/completion prices as floats per token (as returned). Use ×1000 for per-1K.
+        """
+        import time
+
+        import httpx
+
+        now = time.time()
+        if now - self._pricing_cache_time < self.PRICING_CACHE_TTL_SEC and self._pricing_cache:
+            return
+
+        try:
+            with httpx.Client(timeout=10.0, follow_redirects=True) as c:
+                r = c.get("https://openrouter.ai/api/v1/models")
+                r.raise_for_status()
+                jd = r.json()
+                cache: dict[str, tuple[float, float]] = {}
+                for m in jd.get("data", []):
+                    mid = m.get("id") or m.get("canonical_slug")
+                    pricing = m.get("pricing") or {}
+                    p = float(pricing.get("prompt", 0) or 0)
+                    q = float(pricing.get("completion", 0) or 0)
+                    if mid:
+                        cache[mid] = (p, q)
+                        # Also alias by canonical_slug if different
+                        slug = m.get("canonical_slug")
+                        if slug:
+                            cache[slug] = (p, q)
+                # Update cache if non-empty
+                if cache:
+                    self.__class__._pricing_cache = cache
+                    self.__class__._pricing_cache_time = now
+        except Exception:
+            # Silently ignore network errors (fallback to static config)
+            pass
+
     def validate_model_name(self, model_name: str) -> bool:
         """Validate if the model name is allowed.
 
@@ -138,20 +213,21 @@ class OpenRouterProvider(OpenAICompatibleProvider):
         if restriction_service:
             # Check if model name itself is allowed
             if restriction_service.is_allowed(self.get_provider_type(), model_name):
-                return True
+                # Also enforce cost gate
+                return self._within_cost_threshold(model_name)
 
             # Also check aliases - model_name might be an alias
             model_config = self._registry.resolve(model_name)
             if model_config and model_config.aliases:
                 for alias in model_config.aliases:
                     if restriction_service.is_allowed(self.get_provider_type(), alias):
-                        return True
+                        return self._within_cost_threshold(alias)
 
             # If restrictions are configured and model/alias not in allowed list, reject
             return False
-
-        # No restrictions configured - accept any model name as the fallback provider
-        return True
+        # No restrictions configured - enforce cost gate if set
+        return self._within_cost_threshold(model_name)
+        # Note: generate_content performs a cost check too
 
     def generate_content(
         self,
@@ -182,6 +258,11 @@ class OpenRouterProvider(OpenAICompatibleProvider):
         # MCP doesn't use streaming, and this avoids issues with O3 model access
         if "stream" not in kwargs:
             kwargs["stream"] = False
+        # Enforce cost gate at call time
+        if not self._within_cost_threshold(resolved_model):
+            raise ValueError(
+                f"OpenRouter model '{model_name}' exceeds cost threshold OPENROUTER_MAX_COST_PER_1M_TOTAL={self.MAX_COST_TOTAL_PER_1M}."
+            )
 
         # Call parent method with resolved model name
         return super().generate_content(
@@ -242,7 +323,7 @@ class OpenRouterProvider(OpenAICompatibleProvider):
                     if restriction_service.is_allowed(self.get_provider_type(), model_name):
                         allowed = True
 
-                    # CRITICAL: Also check aliases - this fixes the alias restriction bug
+                    # Also check aliases
                     if not allowed and model_config and model_config.aliases:
                         for alias in model_config.aliases:
                             if restriction_service.is_allowed(self.get_provider_type(), alias):
@@ -251,6 +332,10 @@ class OpenRouterProvider(OpenAICompatibleProvider):
 
                     if not allowed:
                         continue
+
+                # Enforce cost gate regardless of restriction config
+                if not self._within_cost_threshold(model_name):
+                    continue
 
                 models.append(model_name)
 

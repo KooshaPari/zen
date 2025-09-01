@@ -118,6 +118,12 @@ class RefactorRequest(WorkflowRequest):
 
     # Optional images for visual context
     images: Optional[list[str]] = Field(default=None, description=REFACTOR_FIELD_DESCRIPTIONS["images"])
+    def get_annotations(self):
+        return {
+            "category": "analysis",
+            "tags": ["refactor", "workflow", "code"],
+            "readOnlyHint": True,
+        }
 
     # Refactor-specific fields (only used in step 1 to initialize)
     refactor_type: Optional[Literal["codesmells", "decompose", "modernize", "organization"]] = Field(

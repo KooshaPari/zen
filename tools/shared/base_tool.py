@@ -225,8 +225,10 @@ class BaseTool(ABC):
 
         provider = ModelProviderRegistry.get_provider_for_model(model_name)
         if not provider:
-            logger = logging.getLogger(f"tools.{self.name}")
-            logger.warning(f"Model '{model_name}' is not available with current API keys. Requiring model selection.")
+            local_logger = logging.getLogger(f"tools.{self.name}")
+            local_logger.warning(
+                f"Model '{model_name}' is not available with current API keys. Requiring model selection."
+            )
             return True
 
         return False
@@ -1105,6 +1107,27 @@ When recommending searches, be specific about what information you need and why 
         # Simple language instruction
         return f"Always respond in {locale}.\n\n"
 
+    def get_orchestration_tooltip(self) -> str:
+        """
+        Standard, non-intrusive orchestration tip appended to system prompts.
+
+        Purpose:
+        - Gently nudge Claude to parallelize independent sub-tasks by batching
+          multiple specialized tool calls using the `agent_batch` tool with
+          `coordination_strategy: 'parallel'` when there are no dependencies.
+        - Encourage grouping 2–10 related, independent tasks into one batch
+          request instead of serial tool invocations.
+
+        This is added as a sidenote/tooltip to avoid interfering with the
+        primary role instructions of each tool.
+        """
+        return (
+            "\n\n[Orchestration Sidenote]\n"
+            "When decomposing work into independent sub-tasks, prefer issuing multiple specialized tool tasks in a single "
+            "`agent_batch` call with `coordination_strategy: 'parallel'` (2–10 tasks). Use serial calls only when tasks are "
+            "dependent."
+        )
+
     # === ABSTRACT METHODS FOR SIMPLE TOOLS ===
 
     @abstractmethod
@@ -1183,33 +1206,10 @@ When recommending searches, be specific about what information you need and why 
 
         return False
 
-    def _get_available_models(self) -> list[str]:
-        """
-        Get list of models available from enabled providers.
-
-        Only returns models from providers that have valid API keys configured.
-        This fixes the namespace collision bug where models from disabled providers
-        were shown to Claude, causing routing conflicts.
-
-        Returns:
-            List of model names from enabled providers only
-        """
-        from providers.registry import ModelProviderRegistry
-
-        # Get models from enabled providers only (those with valid API keys)
-        all_models = ModelProviderRegistry.get_available_model_names()
-
-        # Add OpenRouter models if OpenRouter is configured
-        openrouter_key = os.getenv("OPENROUTER_API_KEY")
-        if openrouter_key and openrouter_key != "your_openrouter_api_key_here":
-            try:
-                from config import OPENROUTER_MODELS
-
-                all_models.extend(OPENROUTER_MODELS)
-            except ImportError:
-                pass
-
-        return sorted(set(all_models))
+    # NOTE: _get_available_models is defined earlier in this file with
+    # OpenRouter alias support. Remove this duplicate implementation that
+    # omitted aliases and caused schema enums to miss short model names
+    # like 'flash'/'pro' when only OpenRouter is configured.
 
     def _resolve_model_context(self, arguments: dict, request) -> tuple[str, Any]:
         """
@@ -1242,40 +1242,118 @@ When recommending searches, be specific about what information you need and why 
             model_name = getattr(request, "model", None)
             if not model_name:
                 from config import DEFAULT_MODEL
-
                 model_name = DEFAULT_MODEL
             logger.debug(f"Using fallback model resolution for '{model_name}' (test mode)")
 
-            # For tests: Check if we should require model selection (auto mode)
+            # If model selection is required (auto/unavailable), optionally auto-select via router
             if self._should_require_model_selection(model_name):
-                # Get suggested model based on tool category
-                from providers.registry import ModelProviderRegistry
+                router_enabled = os.getenv("ZEN_ROUTER_ENABLE", os.getenv("ZEN_ROUTER_AUTO_SELECT", "0")).lower() in ("1", "true", "yes")
+                adaptive_enabled = os.getenv("ZEN_ADAPTIVE_ROUTING", "1") == "1"
 
-                tool_category = self.get_model_category()
-                suggested_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
+                if router_enabled:
+                    # Try adaptive learning router first if enabled
+                    if adaptive_enabled:
+                        try:
+                            from utils.enhanced_model_router import smart_model_selection
 
-                # Build error message based on why selection is required
-                if model_name.lower() == "auto":
-                    error_message = (
-                        f"Model parameter is required in auto mode. "
-                        f"Suggested model for {self.get_name()}: '{suggested_model}' "
-                        f"(category: {tool_category.value})"
-                    )
-                else:
-                    # Model was specified but not available
-                    available_models = self._get_available_models()
+                            # Map tool category to routing task_type
+                            tool_category = self.get_model_category()
+                            if tool_category.value == "fast_response":
+                                task_type = "quick_qa"
+                                optimization = "speed"
+                            elif tool_category.value == "extended_reasoning":
+                                task_type = "complex_reasoning"
+                                optimization = "quality"
+                            else:
+                                task_type = "planning"
+                                optimization = "balanced"
 
-                    error_message = (
-                        f"Model '{model_name}' is not available with current API keys. "
-                        f"Available models: {', '.join(available_models)}. "
-                        f"Suggested model for {self.get_name()}: '{suggested_model}' "
-                        f"(category: {tool_category.value})"
-                    )
-                raise ValueError(error_message)
+                            # Build parameters from request
+                            prompt_text = getattr(request, "prompt", "") or getattr(request, "message", "") or ""
+                            files = getattr(request, "files", None) or []
+
+                            # Use async smart model selection via event loop (works in sync context)
+                            import asyncio
+                            # scope_context may be provided by callers; default to None
+                            scope_context = None
+                            loop = asyncio.new_event_loop()
+                            try:
+                                model_name, selection_metadata = loop.run_until_complete(
+                                    smart_model_selection(
+                                        task_type=task_type,
+                                        prompt=prompt_text[:500] if prompt_text else "",
+                                        files=files if isinstance(files, list) else [],
+                                        optimization=optimization,
+                                        scope_context=scope_context,
+                                    )
+                                )
+                            finally:
+                                loop.close()
+
+                            # Store request ID for performance tracking
+                            if hasattr(self, '__dict__'):
+                                self._adaptive_request_id = selection_metadata.get('request_id')
+
+                            logger.info(f"Adaptive router selected '{model_name}' for '{self.get_name()}' "
+                                       f"(strategy={selection_metadata.get('strategy', 'unknown')})")
+
+                        except ImportError:
+                            adaptive_enabled = False  # Fall back to basic router
+                        except Exception as e:
+                            logger.debug(f"Adaptive routing failed, falling back: {e}")
+                            adaptive_enabled = False
+
+                    # Fall back to basic router if adaptive not available/failed
+                    if not adaptive_enabled or not model_name:
+                        try:
+                            from utils.model_router import ComplexitySignals, get_model_router
+                            # Map tool category to routing task_type
+                            tool_category = self.get_model_category()
+                            if tool_category.value == "fast_response":
+                                task_type = "quick_qa"
+                            elif tool_category.value == "extended_reasoning":
+                                task_type = "complex_reasoning"
+                            else:
+                                task_type = "planning"
+                            # Build simple signals from request
+                            prompt_text = getattr(request, "prompt", "") or getattr(request, "message", "") or ""
+                            files = getattr(request, "files", None) or []
+                            images = getattr(request, "images", None) or []
+                            signals = ComplexitySignals(
+                                prompt_chars=len(prompt_text) if isinstance(prompt_text, str) else 0,
+                                files_count=len(files) if isinstance(files, list) else 0,
+                                images_count=len(images) if isinstance(images, list) else 0,
+                            )
+                            est_tokens = int(signals.prompt_chars / 4) if signals.prompt_chars else None
+                            model_name = get_model_router().select_model(task_type, signals=signals, est_tokens=est_tokens)
+                            logger.info(f"Basic router selected '{model_name}' for '{self.get_name()}' (task_type={task_type})")
+                        except Exception as e:
+                            local_logger = logging.getLogger(f"tools.{self.name}")
+                            local_logger.debug(f"Router auto-selection failed, falling back to old behavior: {e}")
+                        # Fall through to legacy suggest-and-error path
+                if not router_enabled or not model_name or model_name.lower() == "auto":
+                    # Legacy behavior: require explicit model selection
+                    from providers.registry import ModelProviderRegistry
+                    tool_category = self.get_model_category()
+                    suggested_model = ModelProviderRegistry.get_preferred_fallback_model(tool_category)
+                    if model_name.lower() == "auto":
+                        error_message = (
+                            f"Model parameter is required in auto mode. "
+                            f"Suggested model for {self.get_name()}: '{suggested_model}' "
+                            f"(category: {tool_category.value})"
+                        )
+                    else:
+                        available_models = self._get_available_models()
+                        error_message = (
+                            f"Model '{model_name}' is not available with current API keys. "
+                            f"Available models: {', '.join(available_models)}. "
+                            f"Suggested model for {self.get_name()}: '{suggested_model}' "
+                            f"(category: {tool_category.value})"
+                        )
+                    raise ValueError(error_message)
 
             # Create model context for tests
             from utils.model_context import ModelContext
-
             model_context = ModelContext(model_name)
 
         return model_name, model_context

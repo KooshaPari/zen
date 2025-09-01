@@ -299,14 +299,109 @@ black --check .
 isort --check-only .
 ```
 
+### Remote HTTP Access (MCP Streamable HTTP)
+
+The Zen MCP Server now supports remote HTTP access using the MCP Streamable HTTP transport protocol (version 2025-03-26), enabling distributed agent orchestration and cross-language client connectivity.
+
+#### Start HTTP Server (No Authentication)
+```bash
+# Start the streamable HTTP server on http://localhost:8080/mcp
+python server_mcp_http.py
+
+# Custom host/port
+python server_mcp_http.py --host 0.0.0.0 --port 8080
+
+# Check server status
+curl http://localhost:8080/mcp
+```
+
+#### Remote Client Access
+
+**Python Client:**
+```bash
+# Demo all functionality
+python clients/mcp_http_client.py --demo
+
+# Interactive shell
+python clients/mcp_http_client.py --interactive
+
+# Connect to remote server
+python clients/mcp_http_client.py --demo --server http://remote-host:8080/mcp
+```
+
+**TypeScript/Node.js Client:**
+```bash
+cd clients
+npm install && npm run build
+
+# Run demo
+npm run demo
+
+# Interactive mode
+npm run interactive
+```
+
+#### Remote Agent Orchestration
+
+Use the `mcp_agent` tool to register and orchestrate remote MCP servers:
+
+```python
+# Register remote agent
+await client.call_tool("mcp_agent", {
+    "action": "register",
+    "agent_name": "dev-server",
+    "agent_url": "http://dev-host:8080/mcp"
+})
+
+# Execute tool on remote agent
+result = await client.call_tool("mcp_agent", {
+    "action": "execute",
+    "agent_name": "dev-server", 
+    "tool_name": "analyze",
+    "tool_args": {"code": "def hello(): pass"}
+})
+```
+
+#### Performance and Load Testing
+```bash
+# Run comprehensive performance tests
+python examples/performance_test.py
+
+# Test specific scenarios
+python examples/basic_connection.py          # Basic connectivity
+python examples/remote_orchestration.py     # Multi-agent workflows
+```
+
+#### HTTP Server Architecture
+
+- **Protocol**: MCP Streamable HTTP (2025-03-26)
+- **Authentication**: None (open access for development)
+- **Transport**: JSON-RPC 2.0 over HTTP/POST
+- **Session Management**: Automatic via `Mcp-Session-Id` headers
+- **CORS**: Enabled for cross-origin development
+- **Endpoints**: Single `/mcp` endpoint handles all MCP protocol messages
+
+#### Integration with Existing Tools
+
+All Zen MCP tools are available via HTTP:
+- `chat` - Conversational AI with memory
+- `analyze` - Code analysis and insights
+- `codereview` - Code review and suggestions
+- `planner` - Project planning and task breakdown
+- `mcp_agent` - Remote agent orchestration
+- And all other tools in the `tools/` directory
+
 ### File Structure Context
 
 - `./code_quality_checks.sh` - Comprehensive quality check script
 - `./run-server.sh` - Server setup and management
+- `server_mcp_http.py` - Streamable HTTP server implementation
+- `clients/` - Python and TypeScript MCP clients
+- `examples/` - HTTP client usage examples and demos
 - `communication_simulator_test.py` - End-to-end testing framework
 - `simulator_tests/` - Individual test modules
 - `tests/` - Unit test suite
-- `tools/` - MCP tool implementations
+- `tools/` - MCP tool implementations (including mcp_agent)
 - `providers/` - AI provider implementations
 - `systemprompts/` - System prompt definitions
 - `logs/` - Server log files
@@ -316,5 +411,6 @@ isort --check-only .
 - Python 3.9+ with virtual environment
 - All dependencies from `requirements.txt` installed
 - Proper API keys configured in `.env` file
+- Node.js 18+ for TypeScript client (optional)
 
 This guide provides everything needed to efficiently work with the Zen MCP Server codebase using Claude. Always run quality checks before and after making changes to ensure code integrity.

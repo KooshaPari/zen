@@ -118,6 +118,12 @@ class TestGenRequest(WorkflowRequest):
     use_websearch: Optional[bool] = Field(default=None, exclude=True)
 
     @model_validator(mode="after")
+    def get_annotations(self):
+        return {
+            "category": "testing",
+            "tags": ["tests", "generation", "workflow"],
+            "readOnlyHint": True,
+        }
     def validate_step_one_requirements(self):
         """Ensure step 1 has required relevant_files field."""
         if self.step_number == 1 and not self.relevant_files:
@@ -126,6 +132,12 @@ class TestGenRequest(WorkflowRequest):
 
 
 class TestGenTool(WorkflowTool):
+    def get_annotations(self):
+        return {
+            "category": "testing",
+            "tags": ["tests", "generation", "workflow"],
+            "readOnlyHint": True,
+        }
     """
     Test Generation workflow tool for step-by-step test planning and expert validation.
 

@@ -238,11 +238,12 @@ def create_thread(tool_name: str, initial_request: dict[str, Any], parent_thread
     thread_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
 
-    # Filter out non-serializable parameters to avoid JSON encoding issues
+    # Filter out non-serializable/internal parameters to avoid JSON encoding issues
+    # - Exclude known volatile fields and any private/internal keys starting with '_'
     filtered_context = {
         k: v
         for k, v in initial_request.items()
-        if k not in ["temperature", "thinking_mode", "model", "continuation_id"]
+        if k not in ["temperature", "thinking_mode", "model", "continuation_id"] and not str(k).startswith("_")
     }
 
     context = ThreadContext(
@@ -1093,3 +1094,55 @@ def _is_valid_uuid(val: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+# --- Lightweight manager wrapper for compatibility ---
+class ConversationMemoryManager:
+    """
+    Thin async-friendly wrapper exposing high-level conversation helpers.
+
+    Provides a minimal interface used by HTTP servers and integrations:
+    - get_conversation(thread_id) -> list of {role, content}
+    - new_thread(tool_name, initial_request, parent_thread_id=None) -> thread_id
+    - add_turn(...): proxy to module-level add_turn
+    """
+
+    def __init__(self) -> None:
+        pass
+
+    async def get_conversation(self, thread_id: str) -> list[dict[str, Any]]:
+        """Return prior turns as list of chat messages for LLM providers."""
+        context = get_thread(thread_id)
+        if not context:
+            return []
+        messages: list[dict[str, Any]] = []
+        for turn in context.turns:
+            messages.append({"role": turn.role, "content": turn.content})
+        return messages
+
+    def new_thread(self, tool_name: str, initial_request: dict[str, Any], parent_thread_id: Optional[str] = None) -> str:
+        return create_thread(tool_name, initial_request, parent_thread_id)
+
+    def add_turn(
+        self,
+        thread_id: str,
+        role: str,
+        content: str,
+        files: Optional[list[str]] = None,
+        images: Optional[list[str]] = None,
+        tool_name: Optional[str] = None,
+        model_provider: Optional[str] = None,
+        model_name: Optional[str] = None,
+        model_metadata: Optional[dict[str, Any]] = None,
+    ) -> bool:
+        return add_turn(
+            thread_id,
+            role,
+            content,
+            files=files,
+            images=images,
+            tool_name=tool_name,
+            model_provider=model_provider,
+            model_name=model_name,
+            model_metadata=model_metadata,
+        )

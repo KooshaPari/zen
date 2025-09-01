@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorize Application - Zen MCP OAuth 2.0</title>
+    <style>
+        :root {
+            --primary-blue: #007AFF;
+            --primary-blue-hover: #0056CC;
+            --success-green: #34C759;
+            --warning-orange: #FF9500;
+            --error-red: #FF3B30;
+            --text-primary: #1D1D1F;
+            --text-secondary: #86868B;
+            --background-primary: #FFFFFF;
+            --background-secondary: #F5F5F7;
+            --border-primary: #E5E5E7;
+            --border-focus: #007AFF;
+            --shadow-primary: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-elevated: 0 4px 12px rgba(0,0,0,0.15);
+            --border-radius: 12px;
+            --border-radius-small: 8px;
+            --transition: all 0.2s ease;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-primary: #F2F2F7;
+                --text-secondary: #8E8E93;
+                --background-primary: #1C1C1E;
+                --background-secondary: #2C2C2E;
+                --border-primary: #38383A;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin: 0;
+        }
+
+        .card {
+            background: var(--background-primary);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            margin: 16px 0;
+            box-shadow: var(--shadow-primary);
+            border: 1px solid var(--border-primary);
+        }
+
+        .client-info {
+            text-align: center;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-primary);
+            margin-bottom: 24px;
+        }
+
+        .client-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--border-radius);
+            margin: 0 auto 16px;
+            background: linear-gradient(45deg, var(--primary-blue), #00C896);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+        }
+
+        .client-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            color: var(--text-primary);
+        }
+
+        .client-developer {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0 0 8px 0;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            background: var(--success-green);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .verified-badge::before {
+            content: "✓";
+            margin-right: 4px;
+        }
+
+        .auth-request {
+            margin-bottom: 24px;
+        }
+
+        .request-text {
+            font-size: 16px;
+            margin: 0 0 16px 0;
+            text-align: center;
+        }
+
+        .request-emphasis {
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .scopes-section {
+            margin: 24px 0;
+        }
+
+        .scopes-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: var(--text-primary);
+        }
+
+        .scope-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .scope-item:last-child {
+            border-bottom: none;
+        }
+
+        .scope-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .scope-details {
+            flex: 1;
+        }
+
+        .scope-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin: 0 0 4px 0;
+            color: var(--text-primary);
+        }
+
+        .scope-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .scope-checkbox {
+            margin-left: 12px;
+            transform: scale(1.2);
+        }
+
+        .security-info {
+            background: #F0F8FF;
+            border: 1px solid #B3D9FF;
+            border-radius: var(--border-radius-small);
+            padding: 16px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .security-info::before {
+            content: "🛡️";
+            position: absolute;
+            top: 16px;
+            left: 16px;
+        }
+
+        .security-info-content {
+            margin-left: 32px;
+        }
+
+        .security-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin: 0 0 4px 0;
+            color: #0066CC;
+        }
+
+        .security-text {
+            font-size: 13px;
+            color: #0066CC;
+            margin: 0;
+        }
+
+        .webauthn-section {
+            margin: 24px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #F8F9FF, #F0F4FF);
+            border: 2px solid var(--primary-blue);
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .webauthn-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .webauthn-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+        }
+
+        .webauthn-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0 0 16px 0;
+        }
+
+        .device-trust {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 16px 0;
+        }
+
+        .trust-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--success-green);
+            font-weight: 600;
+        }
+
+        .trust-indicator.warning {
+            color: var(--warning-orange);
+        }
+
+        .trust-indicator.error {
+            color: var(--error-red);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--border-radius-small);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-blue-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background: #8E8E93;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-webauthn {
+            background: linear-gradient(45deg, var(--success-green), #00C896);
+            color: white;
+        }
+
+        .btn-webauthn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-elevated);
+        }
+
+        .btn-secondary {
+            background: var(--background-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-primary);
+        }
+
+        .status-message {
+            padding: 12px 16px;
+            border-radius: var(--border-radius-small);
+            margin: 12px 0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #F2FFF5;
+            border: 1px solid #C8E6C9;
+            color: var(--success-green);
+        }
+
+        .status-error {
+            background: #FFF2F2;
+            border: 1px solid #FFCDD2;
+            color: var(--error-red);
+        }
+
+        .status-warning {
+            background: #FFF8E1;
+            border: 1px solid #FFEB3B;
+            color: var(--warning-orange);
+        }
+
+        .status-info {
+            background: #F0F8FF;
+            border: 1px solid #B3D9FF;
+            color: var(--primary-blue);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-primary);
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .footer-links {
+            margin-top: 12px;
+        }
+
+        .footer-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            margin: 0 8px;
+            font-size: 12px;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        .language-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--background-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-small);
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .accessibility-skip {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: var(--primary-blue);
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 1000;
+            border-radius: var(--border-radius-small);
+        }
+
+        .accessibility-skip:focus {
+            top: 6px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 576px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .card {
+                padding: 20px;
+                margin: 12px 0;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .device-trust {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            :root {
+                --border-primary: #000000;
+                --text-secondary: #000000;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Accessibility skip link -->
+    <a href="#main-content" class="accessibility-skip">Skip to main content</a>
+    
+    <!-- Language selector -->
+    <select class="language-selector" id="languageSelector" aria-label="Select language">
+        <option value="en">🇺🇸 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="ja">🇯🇵 日本語</option>
+    </select>
+
+    <div class="container">
+        <header class="header">
+            <h1 id="pageTitle">Authorize Application</h1>
+            <p class="subtitle" id="pageSubtitle">Secure OAuth 2.0 Authorization with WebAuthn</p>
+        </header>
+
+        <main id="main-content">
+            <!-- Client Information Card -->
+            <div class="card">
+                <div class="client-info">
+                    <div class="client-icon" id="clientIcon">🔧</div>
+                    <h2 class="client-name" id="clientName">Loading...</h2>
+                    <p class="client-developer" id="clientDeveloper">by Developer</p>
+                    <span class="verified-badge" id="verifiedBadge" style="display: none;">Verified</span>
+                </div>
+
+                <div class="auth-request">
+                    <p class="request-text">
+                        <span class="request-emphasis" id="clientNameInline">This application</span> 
+                        <span id="requestText">would like to access your Zen MCP account.</span>
+                    </p>
+                </div>
+
+                <!-- Scopes Section -->
+                <div class="scopes-section">
+                    <h3 class="scopes-title" id="scopesTitle">This application will be able to:</h3>
+                    <div id="scopesList">
+                        <!-- Scopes will be populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Security Information -->
+                <div class="security-info">
+                    <div class="security-info-content">
+                        <div class="security-title" id="securityTitle">Security Information</div>
+                        <p class="security-text" id="securityText">
+                            This authorization is secured with OAuth 2.0 and WebAuthn biometric authentication.
+                            Your credentials are never shared with the application.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WebAuthn Authentication Section -->
+            <div class="webauthn-section">
+                <div class="webauthn-icon" id="webauthnIcon">🔐</div>
+                <h3 class="webauthn-title" id="webauthnTitle">Biometric Authentication Required</h3>
+                <p class="webauthn-description" id="webauthnDescription">
+                    Use your fingerprint, face recognition, or security key to authorize this application securely.
+                </p>
+                
+                <div class="device-trust">
+                    <div class="trust-indicator" id="deviceTrust">
+                        <span>✓</span>
+                        <span id="deviceTrustText">Device Trusted</span>
+                    </div>
+                    <div class="trust-indicator" id="connectionTrust">
+                        <span>🔒</span>
+                        <span id="connectionTrustText">Secure Connection</span>
+                    </div>
+                    <div class="trust-indicator" id="sessionTrust">
+                        <span>⏱️</span>
+                        <span id="sessionTrustText">Session Valid</span>
+                    </div>
+                </div>
+
+                <!-- Status Messages -->
+                <div id="statusMessages" role="status" aria-live="polite"></div>
+
+                <!-- Authorization Buttons -->
+                <div class="button-group">
+                    <button type="button" class="btn btn-webauthn" id="authorizeBtn" onclick="authorizeWithWebAuthn()">
+                        <span id="authorizeIcon">🔐</span>
+                        <span id="authorizeText">Authorize with Biometrics</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="denyBtn" onclick="denyAuthorization()">
+                        <span id="denyText">Deny</span>
+                    </button>
+                </div>
+
+                <!-- Alternative Authorization Methods -->
+                <div style="margin-top: 16px;">
+                    <button type="button" class="btn btn-primary" id="passwordBtn" onclick="authorizeWithPassword()" style="display: none;">
+                        <span>🔑</span>
+                        <span id="passwordBtnText">Use Password Instead</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Session Information -->
+            <div class="card" id="userSessionInfo" style="display: none;">
+                <h3 id="sessionInfoTitle">Session Information</h3>
+                <div id="sessionDetails"></div>
+                <button class="btn btn-secondary" onclick="switchUser()" id="switchUserBtn">
+                    <span id="switchUserText">Switch User</span>
+                </button>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p class="footer-text" id="footerText">
+                Powered by Zen MCP OAuth 2.0 & WebAuthn • Your data is protected
+            </p>
+            <div class="footer-links">
+                <a href="/privacy" class="footer-link" id="privacyLink">Privacy Policy</a>
+                <a href="/terms" class="footer-link" id="termsLink">Terms of Service</a>
+                <a href="/security" class="footer-link" id="securityLink">Security</a>
+                <a href="/help" class="footer-link" id="helpLink">Help</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Global state
+        let currentLanguage = 'en';
+        let clientInfo = null;
+        let userSession = null;
+        let authorizationRequest = null;
+        let webAuthnSupported = false;
+
+        // Multi-language support
+        const translations = {
+            en: {
+                pageTitle: "Authorize Application",
+                pageSubtitle: "Secure OAuth 2.0 Authorization with WebAuthn",
+                requestText: "would like to access your Zen MCP account.",
+                scopesTitle: "This application will be able to:",
+                securityTitle: "Security Information",
+                securityText: "This authorization is secured with OAuth 2.0 and WebAuthn biometric authentication. Your credentials are never shared with the application.",
+                webauthnTitle: "Biometric Authentication Required",
+                webauthnDescription: "Use your fingerprint, face recognition, or security key to authorize this application securely.",
+                deviceTrustText: "Device Trusted",
+                connectionTrustText: "Secure Connection",
+                sessionTrustText: "Session Valid",
+                authorizeText: "Authorize with Biometrics",
+                denyText: "Deny",
+                passwordBtnText: "Use Password Instead",
+                sessionInfoTitle: "Session Information",
+                switchUserText: "Switch User",
+                footerText: "Powered by Zen MCP OAuth 2.0 & WebAuthn • Your data is protected",
+                privacyLink: "Privacy Policy",
+                termsLink: "Terms of Service",
+                securityLink: "Security",
+                helpLink: "Help"
+            },
+            es: {
+                pageTitle: "Autorizar Aplicación",
+                pageSubtitle: "Autorización OAuth 2.0 Segura con WebAuthn",
+                requestText: "desea acceder a tu cuenta de Zen MCP.",
+                scopesTitle: "Esta aplicación podrá:",
+                securityTitle: "Información de Seguridad",
+                securityText: "Esta autorización está asegurada con OAuth 2.0 y autenticación biométrica WebAuthn. Tus credenciales nunca se comparten con la aplicación.",
+                webauthnTitle: "Autenticación Biométrica Requerida",
+                webauthnDescription: "Usa tu huella dactilar, reconocimiento facial o clave de seguridad para autorizar esta aplicación de forma segura.",
+                deviceTrustText: "Dispositivo Confiable",
+                connectionTrustText: "Conexión Segura",
+                sessionTrustText: "Sesión Válida",
+                authorizeText: "Autorizar con Biometría",
+                denyText: "Denegar",
+                passwordBtnText: "Usar Contraseña",
+                sessionInfoTitle: "Información de Sesión",
+                switchUserText: "Cambiar Usuario",
+                footerText: "Desarrollado por Zen MCP OAuth 2.0 y WebAuthn • Tus datos están protegidos",
+                privacyLink: "Política de Privacidad",
+                termsLink: "Términos de Servicio",
+                securityLink: "Seguridad",
+                helpLink: "Ayuda"
+            }
+            // Additional languages can be added here
+        };
+
+        // Scope definitions with internationalization
+        const scopeDefinitions = {
+            'mcp:tools:read': {
+                icon: '🔍',
+                name: 'Read Tools',
+                description: 'View available tools and their documentation',
+                nameI18n: { es: 'Leer Herramientas', fr: 'Lire les Outils' },
+                descriptionI18n: { es: 'Ver herramientas disponibles y su documentación', fr: 'Voir les outils disponibles et leur documentation' }
+            },
+            'mcp:tools:execute': {
+                icon: '⚡',
+                name: 'Execute Tools',
+                description: 'Run tools and receive results on your behalf',
+                nameI18n: { es: 'Ejecutar Herramientas', fr: 'Exécuter les Outils' },
+                descriptionI18n: { es: 'Ejecutar herramientas y recibir resultados en tu nombre', fr: 'Exécuter des outils et recevoir des résultats en votre nom' }
+            },
+            'mcp:resources:read': {
+                icon: '📚',
+                name: 'Read Resources',
+                description: 'Access your files, documents, and data sources',
+                nameI18n: { es: 'Leer Recursos', fr: 'Lire les Ressources' },
+                descriptionI18n: { es: 'Acceder a tus archivos, documentos y fuentes de datos', fr: 'Accéder à vos fichiers, documents et sources de données' }
+            },
+            'mcp:resources:write': {
+                icon: '✏️',
+                name: 'Write Resources',
+                description: 'Create, modify, and delete files and data',
+                nameI18n: { es: 'Escribir Recursos', fr: 'Écrire les Ressources' },
+                descriptionI18n: { es: 'Crear, modificar y eliminar archivos y datos', fr: 'Créer, modifier et supprimer des fichiers et données' }
+            },
+            'mcp:prompts:read': {
+                icon: '💭',
+                name: 'Read Prompts',
+                description: 'Access prompt templates and conversation history',
+                nameI18n: { es: 'Leer Plantillas', fr: 'Lire les Invites' },
+                descriptionI18n: { es: 'Acceder a plantillas de prompt e historial de conversación', fr: 'Accéder aux modèles d\'invite et à l\'historique des conversations' }
+            },
+            'profile': {
+                icon: '👤',
+                name: 'Profile Information',
+                description: 'Access your basic profile information and preferences',
+                nameI18n: { es: 'Información de Perfil', fr: 'Informations de Profil' },
+                descriptionI18n: { es: 'Acceder a tu información básica de perfil y preferencias', fr: 'Accéder à vos informations de profil de base et préférences' }
+            }
+        };
+
+        // Initialize page
+        async function initializePage() {
+            try {
+                // Check WebAuthn support
+                webAuthnSupported = await checkWebAuthnSupport();
+                updateWebAuthnUI();
+
+                // Load URL parameters
+                loadAuthorizationRequest();
+
+                // Load client information
+                await loadClientInformation();
+
+                // Check existing session
+                await checkExistingSession();
+
+                // Update trust indicators
+                updateTrustIndicators();
+
+                // Set initial language
+                const urlLang = new URLSearchParams(window.location.search).get('lang');
+                if (urlLang && translations[urlLang]) {
+                    currentLanguage = urlLang;
+                    document.getElementById('languageSelector').value = urlLang;
+                }
+                updateLanguage();
+
+            } catch (error) {
+                console.error('Page initialization failed:', error);
+                showStatus('Failed to initialize authorization page', 'error');
+            }
+        }
+
+        // Check WebAuthn support
+        async function checkWebAuthnSupport() {
+            if (!window.PublicKeyCredential) {
+                return false;
+            }
+
+            try {
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                return available;
+            } catch {
+                return false;
+            }
+        }
+
+        // Update WebAuthn UI based on support
+        function updateWebAuthnUI() {
+            const webauthnSection = document.querySelector('.webauthn-section');
+            const authorizeBtn = document.getElementById('authorizeBtn');
+            const passwordBtn = document.getElementById('passwordBtn');
+            const webauthnIcon = document.getElementById('webauthnIcon');
+            const webauthnTitle = document.getElementById('webauthnTitle');
+            const webauthnDescription = document.getElementById('webauthnDescription');
+
+            if (!webAuthnSupported) {
+                webauthnIcon.textContent = '🔑';
+                webauthnTitle.textContent = 'Password Authentication';
+                webauthnDescription.textContent = 'WebAuthn biometric authentication is not available. You will need to use your password.';
+                authorizeBtn.style.display = 'none';
+                passwordBtn.style.display = 'block';
+                webauthnSection.style.borderColor = '#FF9500';
+                webauthnSection.style.background = 'linear-gradient(135deg, #FFF8E1, #FFEB3B)';
+            }
+        }
+
+        // Load authorization request from URL parameters
+        function loadAuthorizationRequest() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            authorizationRequest = {
+                client_id: urlParams.get('client_id') || 'demo_client',
+                response_type: urlParams.get('response_type') || 'code',
+                scope: urlParams.get('scope') || 'mcp:tools:read profile',
+                redirect_uri: urlParams.get('redirect_uri') || 'https://example.com/callback',
+                state: urlParams.get('state') || 'demo_state',
+                code_challenge: urlParams.get('code_challenge'),
+                code_challenge_method: urlParams.get('code_challenge_method') || 'S256'
+            };
+
+            renderScopes();
+        }
+
+        // Load client information
+        async function loadClientInformation() {
+            try {
+                // In a real implementation, this would fetch from the OAuth server
+                // For demo purposes, we'll use mock data based on client_id
+                const mockClients = {
+                    'demo_client': {
+                        name: 'MCP Developer Tools',
+                        developer: 'Zen MCP Team',
+                        icon: '🛠️',
+                        verified: true,
+                        description: 'Development and testing tools for MCP applications'
+                    },
+                    'vscode_extension': {
+                        name: 'VS Code MCP Extension',
+                        developer: 'Microsoft Corporation',
+                        icon: '💻',
+                        verified: true,
+                        description: 'Official VS Code extension for MCP integration'
+                    }
+                };
+
+                clientInfo = mockClients[authorizationRequest.client_id] || {
+                    name: 'Unknown Application',
+                    developer: 'Unknown Developer',
+                    icon: '❓',
+                    verified: false,
+                    description: 'Third-party application'
+                };
+
+                updateClientUI();
+
+            } catch (error) {
+                console.error('Failed to load client information:', error);
+                showStatus('Failed to load application information', 'error');
+            }
+        }
+
+        // Update client information UI
+        function updateClientUI() {
+            if (!clientInfo) return;
+
+            document.getElementById('clientName').textContent = clientInfo.name;
+            document.getElementById('clientDeveloper').textContent = `by ${clientInfo.developer}`;
+            document.getElementById('clientIcon').textContent = clientInfo.icon;
+            document.getElementById('clientNameInline').textContent = clientInfo.name;
+
+            const verifiedBadge = document.getElementById('verifiedBadge');
+            if (clientInfo.verified) {
+                verifiedBadge.style.display = 'inline-flex';
+            }
+        }
+
+        // Render requested scopes
+        function renderScopes() {
+            const scopesList = document.getElementById('scopesList');
+            const requestedScopes = authorizationRequest.scope.split(' ');
+
+            scopesList.innerHTML = requestedScopes.map(scope => {
+                const scopeInfo = scopeDefinitions[scope] || {
+                    icon: '❓',
+                    name: scope,
+                    description: 'Custom application permission'
+                };
+
+                const name = scopeInfo.nameI18n && scopeInfo.nameI18n[currentLanguage] 
+                    ? scopeInfo.nameI18n[currentLanguage] 
+                    : scopeInfo.name;
+
+                const description = scopeInfo.descriptionI18n && scopeInfo.descriptionI18n[currentLanguage]
+                    ? scopeInfo.descriptionI18n[currentLanguage]
+                    : scopeInfo.description;
+
+                return `
+                    <div class="scope-item">
+                        <div class="scope-icon">${scopeInfo.icon}</div>
+                        <div class="scope-details">
+                            <div class="scope-name">${name}</div>
+                            <p class="scope-description">${description}</p>
+                        </div>
+                        <input type="checkbox" class="scope-checkbox" id="scope_${scope}" checked disabled>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Check for existing user session
+        async function checkExistingSession() {
+            try {
+                const response = await fetch('/oauth/session', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    userSession = await response.json();
+                    updateSessionUI();
+                }
+            } catch (error) {
+                console.error('Session check failed:', error);
+                // Not a critical error - user just needs to authenticate
+            }
+        }
+
+        // Update session information UI
+        function updateSessionUI() {
+            const sessionInfo = document.getElementById('userSessionInfo');
+            const sessionDetails = document.getElementById('sessionDetails');
+
+            if (userSession) {
+                sessionDetails.innerHTML = `
+                    <p><strong>User:</strong> ${userSession.user_id}</p>
+                    <p><strong>Last Login:</strong> ${new Date(userSession.last_login * 1000).toLocaleString()}</p>
+                    <p><strong>Device:</strong> ${userSession.device_name}</p>
+                `;
+                sessionInfo.style.display = 'block';
+            }
+        }
+
+        // Update trust indicators
+        function updateTrustIndicators() {
+            const deviceTrust = document.getElementById('deviceTrust');
+            const connectionTrust = document.getElementById('connectionTrust');
+            const sessionTrust = document.getElementById('sessionTrust');
+
+            // Check HTTPS
+            if (location.protocol === 'https:') {
+                connectionTrust.className = 'trust-indicator';
+            } else {
+                connectionTrust.className = 'trust-indicator warning';
+                connectionTrust.querySelector('span').textContent = '⚠️';
+                document.getElementById('connectionTrustText').textContent = 'Insecure Connection';
+            }
+
+            // Check session status
+            if (userSession) {
+                sessionTrust.className = 'trust-indicator';
+            } else {
+                sessionTrust.className = 'trust-indicator warning';
+                sessionTrust.querySelector('span').textContent = '❌';
+                document.getElementById('sessionTrustText').textContent = 'No Session';
+            }
+
+            // Device trust (would be determined by device registration status)
+            deviceTrust.className = 'trust-indicator';
+        }
+
+        // WebAuthn authorization flow
+        async function authorizeWithWebAuthn() {
+            if (!webAuthnSupported) {
+                showStatus('WebAuthn is not supported on this device', 'error');
+                return;
+            }
+
+            try {
+                setButtonLoading('authorizeBtn', true);
+                showStatus('Preparing biometric authentication...', 'info');
+
+                // Step 1: Request authentication challenge
+                const challengeResponse = await fetch('/oauth/webauthn/challenge', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: authorizationRequest.client_id,
+                        scope: authorizationRequest.scope
+                    })
+                });
+
+                const challengeData = await challengeResponse.json();
+                
+                if (!challengeData.success) {
+                    throw new Error(challengeData.error || 'Failed to get authentication challenge');
+                }
+
+                showStatus('Touch your biometric sensor...', 'info');
+
+                // Step 2: Perform WebAuthn authentication
+                const publicKeyCredentialRequestOptions = {
+                    challenge: base64urlDecode(challengeData.challenge),
+                    allowCredentials: challengeData.allowCredentials.map(cred => ({
+                        id: base64urlDecode(cred.id),
+                        type: cred.type
+                    })),
+                    userVerification: 'required',
+                    timeout: 60000
+                };
+
+                const credential = await navigator.credentials.get({
+                    publicKey: publicKeyCredentialRequestOptions
+                });
+
+                if (!credential) {
+                    throw new Error('Authentication was cancelled');
+                }
+
+                showStatus('Verifying authentication...', 'info');
+
+                // Step 3: Complete OAuth authorization
+                const authResponse = await fetch('/oauth/authorize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: authorizationRequest.client_id,
+                        response_type: authorizationRequest.response_type,
+                        scope: authorizationRequest.scope,
+                        redirect_uri: authorizationRequest.redirect_uri,
+                        state: authorizationRequest.state,
+                        code_challenge: authorizationRequest.code_challenge,
+                        code_challenge_method: authorizationRequest.code_challenge_method,
+                        auth_method: 'webauthn',
+                        credential: {
+                            id: credential.id,
+                            challenge: challengeData.challenge,
+                            response: {
+                                clientDataJSON: base64urlEncode(credential.response.clientDataJSON),
+                                authenticatorData: base64urlEncode(credential.response.authenticatorData),
+                                signature: base64urlEncode(credential.response.signature)
+                            }
+                        }
+                    })
+                });
+
+                const authResult = await authResponse.json();
+
+                if (authResult.success) {
+                    showStatus('Authorization successful! Redirecting...', 'success');
+                    
+                    // Redirect to the client application
+                    setTimeout(() => {
+                        const redirectUrl = new URL(authorizationRequest.redirect_uri);
+                        redirectUrl.searchParams.set('code', authResult.authorization_code);
+                        redirectUrl.searchParams.set('state', authorizationRequest.state);
+                        window.location.href = redirectUrl.toString();
+                    }, 2000);
+                } else {
+                    throw new Error(authResult.error || 'Authorization failed');
+                }
+
+            } catch (error) {
+                console.error('WebAuthn authorization failed:', error);
+                let errorMessage = 'Authentication failed';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Authentication was cancelled or timed out';
+                } else if (error.name === 'SecurityError') {
+                    errorMessage = 'Security error - please ensure you\'re on a secure connection';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showStatus(errorMessage, 'error');
+            } finally {
+                setButtonLoading('authorizeBtn', false);
+            }
+        }
+
+        // Password-based authorization (fallback)
+        async function authorizeWithPassword() {
+            // This would show a password form and handle traditional OAuth flow
+            showStatus('Password authentication not implemented in this demo', 'warning');
+        }
+
+        // Deny authorization
+        async function denyAuthorization() {
+            try {
+                showStatus('Authorization denied. Redirecting...', 'info');
+                
+                setTimeout(() => {
+                    const redirectUrl = new URL(authorizationRequest.redirect_uri);
+                    redirectUrl.searchParams.set('error', 'access_denied');
+                    redirectUrl.searchParams.set('error_description', 'The user denied the request');
+                    redirectUrl.searchParams.set('state', authorizationRequest.state);
+                    window.location.href = redirectUrl.toString();
+                }, 1500);
+
+            } catch (error) {
+                console.error('Error handling denial:', error);
+                showStatus('Error processing denial', 'error');
+            }
+        }
+
+        // Switch user
+        function switchUser() {
+            // Clear current session and reload
+            fetch('/oauth/logout', { method: 'POST', credentials: 'include' })
+                .finally(() => {
+                    window.location.reload();
+                });
+        }
+
+        // Language change handler
+        function changeLanguage() {
+            const selector = document.getElementById('languageSelector');
+            currentLanguage = selector.value;
+            updateLanguage();
+            renderScopes(); // Re-render scopes with new language
+        }
+
+        // Update UI language
+        function updateLanguage() {
+            const t = translations[currentLanguage] || translations.en;
+            
+            Object.keys(t).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.tagName === 'INPUT' || element.tagName === 'BUTTON') {
+                        element.value = t[key];
+                    } else {
+                        element.textContent = t[key];
+                    }
+                }
+            });
+        }
+
+        // Utility functions
+        function showStatus(message, type = 'info') {
+            const statusMessages = document.getElementById('statusMessages');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            statusDiv.setAttribute('role', 'alert');
+            
+            statusMessages.innerHTML = '';
+            statusMessages.appendChild(statusDiv);
+
+            // Remove status after 5 seconds for non-error messages
+            if (type !== 'error') {
+                setTimeout(() => {
+                    if (statusMessages.contains(statusDiv)) {
+                        statusMessages.removeChild(statusDiv);
+                    }
+                }, 5000);
+            }
+        }
+
+        function setButtonLoading(buttonId, loading) {
+            const button = document.getElementById(buttonId);
+            const icon = button.querySelector('span:first-child');
+            
+            if (loading) {
+                button.disabled = true;
+                icon.innerHTML = '<span class="loading-spinner"></span>';
+            } else {
+                button.disabled = false;
+                // Restore original icon based on button
+                if (buttonId === 'authorizeBtn') {
+                    icon.textContent = '🔐';
+                }
+            }
+        }
+
+        // Base64URL encoding/decoding for WebAuthn
+        function base64urlDecode(str) {
+            return Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/').padEnd(str.length + (4 - str.length % 4) % 4, '=')), c => c.charCodeAt(0));
+        }
+
+        function base64urlEncode(buffer) {
+            return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', initializePage);
+        document.getElementById('languageSelector').addEventListener('change', changeLanguage);
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && event.target.tagName === 'BUTTON') {
+                event.target.click();
+            }
+        });
+
+        // Handle back button - show confirmation
+        window.addEventListener('beforeunload', (event) => {
+            if (!event.returnValue) {
+                event.returnValue = 'Are you sure you want to leave? Your authorization will be cancelled.';
+                return event.returnValue;
+            }
+        });
+    </script>
+</body>
+</html>

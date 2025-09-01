@@ -67,7 +67,7 @@ echo "📋 Step 1: Running Linting and Formatting Checks"
 echo "--------------------------------------------------"
 
 echo "🔧 Running ruff linting with auto-fix..."
-$RUFF check --fix --exclude test_simulation_files --exclude .zen_venv
+$RUFF check --fix --unsafe-fixes --exclude test_simulation_files --exclude .zen_venv
 
 echo "🎨 Running black code formatting..."
 $BLACK . --exclude="test_simulation_files/" --exclude=".zen_venv/"

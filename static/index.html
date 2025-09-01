@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Zen MCP HTTP API</title>
+  <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:2rem} a{color:#06c}</style>
+</head>
+<body>
+  <h1>Zen MCP HTTP API</h1>
+  <p>Welcome. Useful links:</p>
+  <ul>
+    <li><a href="/openapi.json">OpenAPI JSON</a></li>
+    <li><a href="/tools.schema.json">Tools JSON Schema</a></li>
+    <li><a href="/viewer">SSE Viewer</a></li>
+    <li><a href="/events">/events (polling snapshot SSE)</a></li>
+    <li><a href="/events/bus">/events/bus (event bus SSE)</a></li>
+    <li><a href="/events/agg">/events/agg (aggregated snapshot SSE)</a></li>
+    <li><a href="/tasks">/tasks (JSON)</a> | <a href="/tasks.csv">/tasks.csv (CSV)</a></li>
+  </ul>
+  <h3>Environment toggles</h3>
+  <ul>
+    <li>HTTP_API_KEY (optional) for API-key auth via X-API-Key</li>
+    <li>USE_REDIS=1 and REDIS_URL or REDIS_HOST/REDIS_PORT/REDIS_DB_CONVERSATIONS</li>
+    <li>HTTP_HOST and HTTP_PORT for server binding</li>
+  </ul>
+</body>
+</html>
+

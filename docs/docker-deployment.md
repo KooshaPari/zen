@@ -25,6 +25,35 @@ This guide covers deploying Zen MCP Server using Docker and Docker Compose for p
    .\docker\scripts\deploy.ps1
    ```
 
+### Apple Silicon (ARM64) Notes — August 2025
+
+- For the shared dev stack, some upstream images (OpenSearch, TEI) are x86_64 only. The compose file pins `platform: linux/amd64` for those and relies on Rosetta/QEMU emulation. In Docker Desktop, enable: “Use Rosetta for x86/amd64 emulation on Apple Silicon”.
+- Use service profiles to run only what you need:
+  - Core (default): Postgres + pgvector, Redis, ArangoDB, Redpanda
+  - Search (full): OpenSearch + Dashboards (`--profile search`)
+  - Search (lite): Meilisearch (`--profile search-lite`)
+  - Embeddings: Ollama or TEI (`--profile embeddings`)
+
+Examples:
+```bash
+# Minimal core services
+docker compose -f docker-compose.shared-dev.yml up -d
+
+# Add OpenSearch (search) and TEI (embeddings)
+docker compose -f docker-compose.shared-dev.yml --profile search --profile embeddings up -d
+
+# Apple Silicon optimized shared-data stack (no x86 images)
+docker compose -f docker-compose.shared-data-arm64.yml up -d
+
+# Apple Silicon optimized shared-dev stack (no x86 images)
+docker compose -f docker-compose.shared-dev.arm64.yml up -d
+
+# Minimal, ARM64-native with Ollama + Meilisearch
+docker compose -f docker-compose.shared-dev.yml --profile search-lite --profile embeddings up -d
+```
+
+Recommended (ARM64): Prefer pgvector for vector search. Enable OpenSearch only when you need its aggregations/DSL.
+
 ## Environment Configuration
 
 ### Required API Keys

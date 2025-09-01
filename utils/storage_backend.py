@@ -24,6 +24,13 @@ import threading
 import time
 from typing import Optional
 
+# Optional Redis support for cross-process persistence
+try:
+    import redis  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    redis = None
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -102,12 +109,71 @@ _storage_instance = None
 _storage_lock = threading.Lock()
 
 
+
+class RedisStorage:
+    """Redis-backed storage compatible with InMemoryStorage API."""
+
+    def __init__(self):
+        if redis is None:
+            raise RuntimeError("Redis package not installed. Install redis-py to use RedisStorage.")
+
+        # If REDIS_URL is set, prefer it; otherwise fall back to host/port/db
+        url = os.getenv("REDIS_URL")
+        if url:
+            self._client = redis.from_url(url, decode_responses=True, socket_timeout=5, socket_connect_timeout=5)
+            conn_info = url
+        else:
+            host = os.getenv("REDIS_HOST", "localhost")
+            port = int(os.getenv("REDIS_PORT", "6379"))
+            db = int(os.getenv("REDIS_DB_CONVERSATIONS", "0"))
+            self._client = redis.Redis(
+                host=host,
+                port=port,
+                db=db,
+                decode_responses=True,
+                socket_timeout=5,
+                socket_connect_timeout=5,
+            )
+            conn_info = f"{host}:{port}/{db}"
+        # Test connection early
+        self._client.ping()
+        logger.info(f"Connected to Redis conversation storage at {conn_info}")
+
+    def setex(self, key: str, ttl_seconds: int, value: str) -> None:
+        self._client.setex(key, ttl_seconds, value)
+
+    # Keep the same API as InMemoryStorage for get
+    def get(self, key: str) -> Optional[str]:
+        value = self._client.get(key)
+        return value
+
+
+def _should_use_redis_storage() -> bool:
+    """Decide whether to use Redis storage based on env flags and availability."""
+    use_flag = os.getenv("USE_REDIS", "0").lower() in ("1", "true", "yes")
+    url = os.getenv("REDIS_URL", "")
+    # If any of USE_REDIS=1 or REDIS_URL is set and redis package is available, try Redis
+    return (use_flag or bool(url)) and (redis is not None)
+
+
 def get_storage_backend() -> InMemoryStorage:
-    """Get the global storage instance (singleton pattern)"""
+    """Get the global storage instance (singleton pattern).
+
+    If USE_REDIS=1 or REDIS_URL is set and redis package is available, a Redis-backed
+    storage will be used. Otherwise, fall back to in-memory storage.
+    """
     global _storage_instance
     if _storage_instance is None:
         with _storage_lock:
             if _storage_instance is None:
-                _storage_instance = InMemoryStorage()
-                logger.info("Initialized in-memory conversation storage")
-    return _storage_instance
+                try:
+                    if _should_use_redis_storage():
+                        _storage_instance = RedisStorage()  # type: ignore[assignment]
+                    else:
+                        _storage_instance = InMemoryStorage()
+                except Exception as e:
+                    logger.warning(f"Redis storage unavailable ({e}); using in-memory storage")
+                    _storage_instance = InMemoryStorage()
+                logger.info("Initialized conversation storage backend")
+    return _storage_instance  # type: ignore[return-value]
+

@@ -1,0 +1,137 @@
+# Shared Data Infrastructure for Zen MCP Server (ARM64 optimized)
+# This compose file is optimized for Apple Silicon/ARM64 processors
+
+services:
+  # PostgreSQL with pgvector extension for vector storage
+  postgres-vector:
+    image: pgvector/pgvector:pg16
+    container_name: zen-postgres-vector
+    environment:
+      POSTGRES_DB: zen_vector
+      POSTGRES_USER: zen_user
+      POSTGRES_PASSWORD: zen_secure_pass_2025
+      POSTGRES_INITDB_ARGS: "-c shared_preload_libraries=vector"
+    ports:
+      - "5433:5432"  # Using 5433 to avoid conflict with local PostgreSQL
+    volumes:
+      - postgres_vector_data:/var/lib/postgresql/data
+      - ./scripts/init-pgvector.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zen_user -d zen_vector"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zen-shared-data
+
+  # ArangoDB for knowledge graph
+  arangodb:
+    image: arangodb:3.12
+    container_name: zen-arangodb
+    environment:
+      ARANGO_ROOT_PASSWORD: zen_arango_2025
+      ARANGO_STORAGE_ENGINE: rocksdb
+    ports:
+      - "8529:8529"
+    volumes:
+      - arangodb_data:/var/lib/arangodb3
+      - arangodb_apps:/var/lib/arangodb3-apps
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8529/_api/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zen-shared-data
+
+  # Redis for caching and state management
+  redis:
+    image: redis:7-alpine
+    container_name: zen-redis
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zen-shared-data
+
+  # Redpanda (Kafka-compatible) for event streaming
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.1
+    container_name: zen-redpanda
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
+      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
+      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+      - --mode dev-container
+      - --smp 1
+      - --default-log-level=info
+    ports:
+      - "18081:18081"  # Schema Registry
+      - "18082:18082"  # Pandaproxy (REST)
+      - "19092:19092"  # Kafka API
+      - "19644:9644"   # Prometheus metrics
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep 'Healthy: true'"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - zen-shared-data
+
+  # MinIO for object storage (artifacts, large files)
+  minio:
+    image: minio/minio:latest
+    container_name: zen-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: zen_minio_admin
+      MINIO_ROOT_PASSWORD: zen_minio_secure_2025
+    ports:
+      - "9000:9000"  # API
+      - "9001:9001"  # Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zen-shared-data
+
+volumes:
+  postgres_vector_data:
+    driver: local
+  arangodb_data:
+    driver: local
+  arangodb_apps:
+    driver: local
+  redis_data:
+    driver: local
+  redpanda_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  zen-shared-data:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

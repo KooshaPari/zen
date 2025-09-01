@@ -180,6 +180,11 @@ class OpenRouterModelRegistry:
                     del model_data["temperature_constraint"]
                 model_data["temperature_constraint"] = temp_constraint
 
+                # Map optional pricing fields if present in config
+                if "input_cost_per_1k" in model_data:
+                    model_data["input_cost_per_1k"] = float(model_data["input_cost_per_1k"])  # type: ignore[assignment]
+                if "output_cost_per_1k" in model_data:
+                    model_data["output_cost_per_1k"] = float(model_data["output_cost_per_1k"])  # type: ignore[assignment]
                 config = ModelCapabilities(**model_data)
                 configs.append(config)
 

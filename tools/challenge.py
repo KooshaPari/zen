@@ -49,6 +49,12 @@ class ChallengeTool(SimpleTool):
     transforms the input prompt into a structured critical thinking challenge.
     """
 
+    def get_annotations(self):
+        return {
+            "category": "reasoning",
+            "tags": ["challenge", "critical-thinking"],
+            "readOnlyHint": True,
+        }
     def get_name(self) -> str:
         return "challenge"
 

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/zen-mcp-tools.schema.json",
+  "title": "Zen MCP Tools Schema",
+  "type": "object",
+  "properties": {
+    "agent_async": {
+      "type": "object",
+      "properties": {
+        "agent_type": {"$ref": "components.json#/schemas/AgentType"},
+        "task_description": {"type": "string"},
+        "message": {"type": "string"},
+        "agent_args": {"type": "array", "items": {"type": "string"}},
+        "working_directory": {"type": "string"},
+        "timeout_seconds": {"type": "integer", "minimum": 60, "maximum": 3600, "default": 1800},
+        "env_vars": {"type": "object", "additionalProperties": {"type": "string"}},
+        "files": {"type": "array", "items": {"type": "string"}},
+        "priority": {"type": "string", "enum": ["low","normal","high"], "default": "normal"}
+      },
+      "required": ["agent_type","task_description","message"],
+      "additionalProperties": false
+    },
+    "agent_sync": {
+      "type": "object",
+      "properties": {
+        "agent_type": {"$ref": "components.json#/schemas/AgentType"},
+        "task_description": {"type": "string"},
+        "message": {"type": "string"},
+        "agent_args": {"type": "array", "items": {"type": "string"}},
+        "working_directory": {"type": "string"},
+        "timeout_seconds": {"type": "integer", "minimum": 30, "maximum": 1800, "default": 300},
+        "env_vars": {"type": "object", "additionalProperties": {"type": "string"}},
+        "files": {"type": "array", "items": {"type": "string"}}
+      },
+      "required": ["agent_type","task_description","message"],
+      "additionalProperties": false
+    },
+    "agent_inbox": {
+      "type": "object",
+      "properties": {
+        "task_id": {"type": "string"},
+        "action": {"type": "string", "enum": ["status","results","list","cancel"], "default": "status"},
+        "include_messages": {"type": "boolean", "default": true},
+        "max_message_length": {"type": "integer", "minimum": 100, "maximum": 5000, "default": 1000},
+        "filter_status": {"type": "array", "items": {"$ref": "components.json#/schemas/TaskStatus"}}
+      },
+      "additionalProperties": false
+    },
+    "agent_batch": {
+      "type": "object",
+      "properties": {
+        "tasks": {"type": "array", "items": {"$ref": "components.json#/schemas/AgentTaskRequest"}, "minItems": 2, "maxItems": 10},
+        "coordination_strategy": {"type": "string", "enum": ["parallel","sequential"], "default": "parallel"},
+        "max_concurrent": {"type": "integer", "minimum": 1, "default": 5},
+        "timeout_seconds": {"type": "integer", "minimum": 300, "maximum": 7200, "default": 3600},
+        "fail_fast": {"type": "boolean", "default": false},
+        "batch_description": {"type": "string"}
+      },
+      "required": ["tasks"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
+

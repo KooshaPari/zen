@@ -414,7 +414,8 @@ class SimpleTool(BaseTool):
             # Get system prompt for this tool
             base_system_prompt = self.get_system_prompt()
             language_instruction = self.get_language_instruction()
-            system_prompt = language_instruction + base_system_prompt
+            # Append orchestration tooltip to nudge parallelization via agent_batch
+            system_prompt = language_instruction + base_system_prompt + self.get_orchestration_tooltip()
 
             # Generate AI response using the provider
             logger.info(f"Sending request to {provider.get_provider_type().value} API for {self.get_name()}")

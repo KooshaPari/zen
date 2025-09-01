@@ -121,6 +121,13 @@ class ThinkDeepTool(WorkflowTool):
         "Provides systematic hypothesis testing, evidence-based investigation, and expert validation."
     )
 
+    def get_annotations(self):
+        return {
+            "category": "analysis",
+            "tags": ["think", "analysis", "workflow"],
+            "readOnlyHint": True,
+        }
+
     def __init__(self):
         """Initialize the ThinkDeep workflow tool"""
         super().__init__()

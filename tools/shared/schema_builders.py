@@ -110,6 +110,36 @@ class SchemaBuilder:
 
         return schema
 
+
+def build_tool_schema(
+    tool_specific_fields: dict[str, dict[str, Any]] = None,
+    required_fields: list[str] = None,
+    model_field_schema: dict[str, Any] = None,
+    auto_mode: bool = False,
+) -> dict[str, Any]:
+    """
+    Convenience function for building tool schemas.
+
+    This function provides backward compatibility for tools that expect
+    build_tool_schema instead of SchemaBuilder.build_schema().
+
+    Args:
+        tool_specific_fields: Additional fields specific to the tool
+        required_fields: List of required field names
+        model_field_schema: Schema for the model field
+        auto_mode: Whether the tool is in auto mode (affects model requirement)
+
+    Returns:
+        Complete JSON schema for the tool
+    """
+    return SchemaBuilder.build_schema(
+        tool_specific_fields=tool_specific_fields,
+        required_fields=required_fields,
+        model_field_schema=model_field_schema,
+        auto_mode=auto_mode,
+    )
+
+
     @staticmethod
     def get_common_fields() -> dict[str, dict[str, Any]]:
         """Get the standard field schemas for simple tools."""

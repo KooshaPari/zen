@@ -78,6 +78,12 @@ class CodeReviewRequest(WorkflowRequest):
     next_step_required: bool = Field(..., description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["next_step_required"])
 
     # Investigation tracking fields
+    def get_annotations(self):
+        return {
+            "category": "code-quality",
+            "tags": ["review", "security", "performance", "workflow"],
+            "readOnlyHint": True,
+        }
     findings: str = Field(..., description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["findings"])
     files_checked: list[str] = Field(
         default_factory=list, description=CODEREVIEW_WORKFLOW_FIELD_DESCRIPTIONS["files_checked"]

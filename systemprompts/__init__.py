@@ -10,6 +10,7 @@ from .debug_prompt import DEBUG_ISSUE_PROMPT
 from .docgen_prompt import DOCGEN_PROMPT
 from .planner_prompt import PLANNER_PROMPT
 from .precommit_prompt import PRECOMMIT_PROMPT
+from .qa_workflows_prompt import QA_WORKFLOWS_PROMPT
 from .refactor_prompt import REFACTOR_PROMPT
 from .secaudit_prompt import SECAUDIT_PROMPT
 from .testgen_prompt import TESTGEN_PROMPT
@@ -30,4 +31,5 @@ __all__ = [
     "SECAUDIT_PROMPT",
     "TESTGEN_PROMPT",
     "TRACER_PROMPT",
+    "QA_WORKFLOWS_PROMPT",
 ]

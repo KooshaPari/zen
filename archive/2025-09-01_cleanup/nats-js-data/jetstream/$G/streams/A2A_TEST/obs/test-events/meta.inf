@@ -1,0 +1,1 @@
+{"Created":"2025-08-30T22:05:41.221951Z","Name":"test-events","durable_name":"test-events","deliver_policy":"all","ack_policy":"explicit","ack_wait":30000000000,"max_deliver":-1,"filter_subject":"a2a.task.T123.events","replay_policy":"instant","max_ack_pending":1000,"deliver_subject":"_INBOX.UJ1LkdNw11rWfgSqnhGKmP","num_replicas":0,"metadata":{"_nats.req.level":"0"}}

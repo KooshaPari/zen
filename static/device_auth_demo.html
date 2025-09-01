@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zen MCP Device Authentication Demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            max-width: 800px; 
+            margin: 50px auto; 
+            padding: 20px;
+            background: #f5f5f7;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .method-card {
+            border: 2px solid #e5e5e7;
+            transition: all 0.2s ease;
+        }
+        
+        .method-card:hover {
+            border-color: #007AFF;
+            transform: translateY(-2px);
+        }
+        
+        .method-card.available {
+            border-color: #34C759;
+        }
+        
+        .method-card.unavailable {
+            opacity: 0.6;
+            border-color: #FF3B30;
+        }
+        
+        button { 
+            background: #007AFF; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        button:hover { 
+            background: #0056CC; 
+        }
+        
+        button:disabled {
+            background: #8E8E93;
+            cursor: not-allowed;
+        }
+        
+        .biometric-btn {
+            background: linear-gradient(45deg, #34C759, #00C896);
+            font-weight: 600;
+        }
+        
+        .error { 
+            color: #FF3B30; 
+            background: #FFF2F2;
+            border: 1px solid #FFCDD2;
+        }
+        
+        .success { 
+            color: #34C759; 
+            background: #F2FFF5;
+            border: 1px solid #C8E6C9;
+        }
+        
+        .warning {
+            color: #FF9500;
+            background: #FFF8E1;
+            border: 1px solid #FFEB3B;
+        }
+        
+        .status { 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            font-weight: 500;
+        }
+        
+        input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border: 2px solid #E5E5E7; 
+            border-radius: 8px; 
+            font-size: 16px;
+        }
+        
+        input:focus {
+            border-color: #007AFF;
+            outline: none;
+        }
+        
+        .platform-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+        
+        .platform-universal { background: #007AFF; color: white; }
+        .platform-macos { background: #000; color: white; }
+        .platform-windows { background: #00BCF5; color: white; }
+        
+        .icon {
+            font-size: 24px;
+            margin-right: 12px;
+            vertical-align: middle;
+        }
+        
+        .method-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .capabilities {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .session-info {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        
+        .device-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #E5E5E7;
+            border-radius: 8px;
+            padding: 8px;
+        }
+        
+        .device-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #F0F0F0;
+        }
+        
+        .device-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔐 Zen MCP Device Authentication Demo</h1>
+        <p>Demonstrates biometric and device-based authentication for MCP endpoints.</p>
+        
+        <div id="sessionInfo" class="session-info" style="display: none;">
+            <h3>🎉 Authenticated Successfully</h3>
+            <p id="sessionDetails"></p>
+            <button onclick="revokeSession()">Sign Out</button>
+            <button onclick="loadUserDevices()">View My Devices</button>
+        </div>
+    </div>
+    
+    <div id="authMethods"></div>
+    
+    <div class="card">
+        <h2>📱 My Devices</h2>
+        <div id="devicesList">
+            <p><em>Sign in to view registered devices</em></p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>🧪 Test MCP Endpoint</h2>
+        <p>Test authenticated access to the MCP tools endpoint:</p>
+        <button onclick="testMCPEndpoint()">Test /mcp Endpoint</button>
+        <div id="mcpTestResult"></div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentSession = null;
+        let availableMethods = {};
+        
+        // Load available authentication methods
+        async function loadAuthMethods() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/methods`);
+                availableMethods = await response.json();
+                
+                renderAuthMethods();
+                
+            } catch (error) {
+                console.error('Failed to load auth methods:', error);
+                setStatus('authMethods', '❌ Failed to load authentication methods', true);
+            }
+        }
+        
+        function renderAuthMethods() {
+            const container = document.getElementById('authMethods');
+            container.innerHTML = '';
+            
+            Object.entries(availableMethods).forEach(([key, method]) => {
+                const card = document.createElement('div');
+                card.className = `card method-card ${method.available ? 'available' : 'unavailable'}`;
+                
+                const icon = getMethodIcon(key);
+                const platformBadge = `<span class="platform-badge platform-${method.platform}">${method.platform}</span>`;
+                
+                card.innerHTML = `
+                    <div class="method-title">
+                        <span class="icon">${icon}</span>
+                        <h3>${method.name} ${platformBadge}</h3>
+                    </div>
+                    
+                    <div class="capabilities">
+                        <strong>Biometric:</strong> ${method.biometric ? '✅ Yes' : '❌ No'}<br>
+                        ${method.capabilities ? `<strong>Features:</strong> Face: ${method.capabilities.face ? '✅' : '❌'}, Fingerprint: ${method.capabilities.fingerprint ? '✅' : '❌'}, PIN: ${method.capabilities.pin ? '✅' : '❌'}` : ''}
+                    </div>
+                    
+                    <input type="text" id="userId_${key}" placeholder="User ID (e.g., your email)" />
+                    <input type="text" id="deviceName_${key}" placeholder="Device Name (optional)" />
+                    
+                    <button onclick="registerMethod('${key}')" ${!method.available ? 'disabled' : ''} class="${method.biometric ? 'biometric-btn' : ''}">
+                        Register Device
+                    </button>
+                    
+                    <button onclick="authenticateMethod('${key}')" ${!method.available ? 'disabled' : ''}>
+                        Authenticate
+                    </button>
+                    
+                    <div id="status_${key}"></div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function getMethodIcon(method) {
+            const icons = {
+                'webauthn': '🔑',
+                'macos_touchid': '👆',
+                'macos_keychain': '🗝️',
+                'windows_hello': '🪟'
+            };
+            return icons[method] || '🔒';
+        }
+        
+        async function registerMethod(method) {
+            const userId = document.getElementById(`userId_${method}`).value;
+            const deviceName = document.getElementById(`deviceName_${method}`).value || 'Web Browser';
+            
+            if (!userId) {
+                setStatus(`status_${method}`, 'Please enter a User ID', true);
+                return;
+            }
+            
+            try {
+                setStatus(`status_${method}`, 'Initiating registration...');
+                
+                // Initiate registration
+                const initResponse = await fetch(`${API_BASE}/auth/register/initiate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        device_name: deviceName,
+                        method: method
+                    })
+                });
+                
+                const initData = await initResponse.json();
+                
+                let registrationData = {};
+                
+                if (method === 'webauthn') {
+                    // Handle WebAuthn registration
+                    setStatus(`status_${method}`, 'Touch your biometric sensor or security key...');
+                    
+                    // Store original challenge before conversion
+                    const originalChallenge = initData.publicKey.challenge;
+                    
+                    // Convert challenge and user ID to ArrayBuffer for WebAuthn API
+                    initData.publicKey.challenge = base64urlDecode(initData.publicKey.challenge);
+                    initData.publicKey.user.id = base64urlDecode(initData.publicKey.user.id);
+                    
+                    const credential = await navigator.credentials.create(initData);
+                    
+                    registrationData = {
+                        id: credential.id,
+                        challenge: originalChallenge, // Send back the original string
+                        response: {
+                            clientDataJSON: base64urlEncode(credential.response.clientDataJSON),
+                            attestationObject: base64urlEncode(credential.response.attestationObject)
+                        }
+                    };
+                } else if (method === 'macos_touchid') {
+                    // For macOS Touch ID, just pass through the data
+                    registrationData = initData;
+                    setStatus(`status_${method}`, 'Check for Touch ID prompt...');
+                } else if (method === 'windows_hello') {
+                    // For Windows Hello, just pass through the data
+                    registrationData = initData;
+                    setStatus(`status_${method}`, 'Check for Windows Hello prompt...');
+                }
+                
+                // Complete registration
+                const completeResponse = await fetch(`${API_BASE}/auth/register/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        device_name: deviceName,
+                        method: method,
+                        registration_data: registrationData
+                    })
+                });
+                
+                const result = await completeResponse.json();
+                
+                if (result.success) {
+                    setStatus(`status_${method}`, '✅ Device registered successfully!');
+                } else {
+                    setStatus(`status_${method}`, '❌ Registration failed', true);
+                }
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                setStatus(`status_${method}`, `❌ Registration failed: ${error.message}`, true);
+            }
+        }
+        
+        async function authenticateMethod(method) {
+            const userId = document.getElementById(`userId_${method}`).value;
+            
+            if (!userId) {
+                setStatus(`status_${method}`, 'Please enter a User ID', true);
+                return;
+            }
+            
+            try {
+                setStatus(`status_${method}`, 'Initiating authentication...');
+                
+                // Initiate authentication
+                const initResponse = await fetch(`${API_BASE}/auth/authenticate/initiate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        method: method
+                    })
+                });
+                
+                const initData = await initResponse.json();
+                
+                let authData = { method: method };
+                
+                if (method === 'webauthn') {
+                    // Handle WebAuthn authentication
+                    setStatus(`status_${method}`, 'Touch your biometric sensor or security key...');
+                    
+                    // Store original challenge before conversion
+                    const originalChallenge = initData.publicKey.challenge;
+                    
+                    // Convert challenge and credential IDs to ArrayBuffer for WebAuthn API
+                    initData.publicKey.challenge = base64urlDecode(initData.publicKey.challenge);
+                    initData.publicKey.allowCredentials.forEach(cred => {
+                        cred.id = base64urlDecode(cred.id);
+                    });
+                    
+                    const assertion = await navigator.credentials.get(initData);
+                    
+                    authData = {
+                        method: method,
+                        id: assertion.id,
+                        challenge: originalChallenge, // Send back the original string
+                        response: {
+                            clientDataJSON: base64urlEncode(assertion.response.clientDataJSON),
+                            authenticatorData: base64urlEncode(assertion.response.authenticatorData),
+                            signature: base64urlEncode(assertion.response.signature)
+                        }
+                    };
+                } else {
+                    // For other methods, include relevant data
+                    authData = {
+                        method: method,
+                        device_id: initData.device_id,
+                        ...initData
+                    };
+                    setStatus(`status_${method}`, 'Check for biometric prompt...');
+                }
+                
+                // Verify authentication
+                const verifyResponse = await fetch(`${API_BASE}/auth/authenticate/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        auth_data: authData
+                    })
+                });
+                
+                const result = await verifyResponse.json();
+                
+                if (result.success) {
+                    currentSession = result;
+                    setStatus(`status_${method}`, `✅ Authenticated successfully!`);
+                    showSessionInfo();
+                    loadUserDevices();
+                } else {
+                    setStatus(`status_${method}`, '❌ Authentication failed', true);
+                }
+                
+            } catch (error) {
+                console.error('Authentication error:', error);
+                setStatus(`status_${method}`, `❌ Authentication failed: ${error.message}`, true);
+            }
+        }
+        
+        function showSessionInfo() {
+            const sessionInfo = document.getElementById('sessionInfo');
+            const sessionDetails = document.getElementById('sessionDetails');
+            
+            if (currentSession) {
+                sessionDetails.innerHTML = `
+                    <strong>User:</strong> ${currentSession.user_id}<br>
+                    <strong>Method:</strong> ${currentSession.auth_method}<br>
+                    <strong>Session ID:</strong> ${currentSession.session_id.substring(0, 16)}...<br>
+                    <strong>Expires:</strong> ${new Date(currentSession.expires_at * 1000).toLocaleString()}
+                `;
+                sessionInfo.style.display = 'block';
+            } else {
+                sessionInfo.style.display = 'none';
+            }
+        }
+        
+        async function revokeSession() {
+            try {
+                await fetch(`${API_BASE}/auth/session/revoke`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                currentSession = null;
+                showSessionInfo();
+                document.getElementById('devicesList').innerHTML = '<p><em>Sign in to view registered devices</em></p>';
+                
+                // Clear all status messages
+                Object.keys(availableMethods).forEach(method => {
+                    setStatus(`status_${method}`, '');
+                });
+                
+            } catch (error) {
+                console.error('Session revocation failed:', error);
+            }
+        }
+        
+        async function loadUserDevices() {
+            if (!currentSession) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/devices`, {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                const devicesList = document.getElementById('devicesList');
+                
+                if (data.devices && data.devices.length > 0) {
+                    devicesList.innerHTML = data.devices.map(device => `
+                        <div class="device-item">
+                            <div>
+                                <strong>${device.device_name}</strong><br>
+                                <small>Method: ${device.auth_method} | Registered: ${new Date(device.registered_at * 1000).toLocaleDateString()}</small>
+                            </div>
+                            <button onclick="revokeDevice('${device.device_id}')" style="background: #FF3B30;">Remove</button>
+                        </div>
+                    `).join('');
+                } else {
+                    devicesList.innerHTML = '<p><em>No devices registered</em></p>';
+                }
+                
+            } catch (error) {
+                console.error('Failed to load devices:', error);
+                document.getElementById('devicesList').innerHTML = '<p><em>Failed to load devices</em></p>';
+            }
+        }
+        
+        async function revokeDevice(deviceId) {
+            if (!confirm('Remove this device?')) {
+                return;
+            }
+            
+            try {
+                await fetch(`${API_BASE}/auth/devices/${deviceId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                
+                await loadUserDevices();
+                
+            } catch (error) {
+                console.error('Device revocation failed:', error);
+            }
+        }
+        
+        async function testMCPEndpoint() {
+            try {
+                const response = await fetch(`${API_BASE}/mcp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: 1,
+                        method: 'tools/list'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                setStatus('mcpTestResult', `✅ MCP Test Success: Found ${result.result?.tools?.length || 0} tools`);
+                
+            } catch (error) {
+                console.error('MCP test failed:', error);
+                setStatus('mcpTestResult', `❌ MCP Test Failed: ${error.message}`, true);
+            }
+        }
+        
+        function setStatus(elementId, message, isError = false) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.innerHTML = message;
+                el.className = `status ${isError ? 'error' : 'success'}`;
+            }
+        }
+        
+        // Base64URL encoding/decoding helpers
+        function base64urlDecode(str) {
+            return Uint8Array.from(atob(str.replace(/-/g, '+').replace(/_/g, '/').padEnd(str.length + (4 - str.length % 4) % 4, '=')), c => c.charCodeAt(0));
+        }
+        
+        function base64urlEncode(buffer) {
+            return btoa(String.fromCharCode(...new Uint8Array(buffer))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+        
+        // Check session on load
+        async function checkSession() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/session`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const sessionData = await response.json();
+                    currentSession = {
+                        user_id: sessionData.user_id,
+                        auth_method: sessionData.auth_method,
+                        session_id: 'existing',
+                        expires_at: sessionData.expires_at
+                    };
+                    showSessionInfo();
+                    loadUserDevices();
+                }
+                
+            } catch (error) {
+                // No existing session
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAuthMethods();
+            checkSession();
+        });
+    </script>
+</body>
+</html>

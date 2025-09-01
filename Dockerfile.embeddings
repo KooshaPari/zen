@@ -1,0 +1,24 @@
+# Simple Python-based embedding service for ARM64
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Update pip and install base requirements
+RUN pip install --upgrade pip
+
+# Install PyTorch CPU version first (for ARM64)
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# Install other dependencies
+RUN pip install \
+    fastapi \
+    uvicorn \
+    sentence-transformers \
+    numpy
+
+# Copy embedding server
+COPY embedding_server.py .
+
+EXPOSE 8090
+
+CMD ["python", "embedding_server.py"]

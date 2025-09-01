@@ -34,7 +34,16 @@ class ListModelsTool(BaseTool):
         return "listmodels"
 
     def get_description(self) -> str:
-        return "Shows which AI model providers are configured, available model names, their aliases and capabilities."
+        return """🤖 LIST MODELS - Discover available AI models and their capabilities.
+
+Use this tool to:
+• 🔍 VIEW PROVIDERS: See all configured AI providers (OpenAI, Anthropic, Google, etc.)
+• 📋 LIST MODELS: Get complete list of available models with names and aliases
+• ⚡ CHECK SPEEDS: See throughput ratings for performance-critical tasks
+• 💰 COST INFO: Compare model pricing for budget optimization
+• 🎯 CAPABILITIES: Understand what each model excels at (reasoning, coding, analysis)
+
+WHEN TO USE: Before using deploy tool to select the best model for your task, or when you need to optimize for speed/cost/quality."""
 
     def get_input_schema(self) -> dict[str, Any]:
         """Return the JSON schema for the tool's input"""
@@ -46,7 +55,7 @@ class ListModelsTool(BaseTool):
 
     def get_annotations(self) -> Optional[dict[str, Any]]:
         """Return tool annotations indicating this is a read-only tool"""
-        return {"readOnlyHint": True}
+        return {"readOnlyHint": True, "category": "utility", "tags": ["models", "listing"]}
 
     def get_system_prompt(self) -> str:
         """No AI model needed for this tool"""

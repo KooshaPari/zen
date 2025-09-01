@@ -121,6 +121,13 @@ class PlannerTool(WorkflowTool):
     - Self-contained operation (no expert analysis)
     """
 
+    def get_annotations(self):
+        return {
+            "category": "planning",
+            "tags": ["planner", "workflow", "sequencer"],
+            "readOnlyHint": True,
+        }
+
     def __init__(self):
         super().__init__()
         self.branches = {}

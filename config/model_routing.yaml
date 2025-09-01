@@ -1,0 +1,396 @@
+# Zen MCP Model Catalog, Routing, and Caching Configuration (v1)
+# Notes:
+# - Context/window sizes are indicative; verify with provider caps in runtime.
+# - cost_band: free | low | medium | high | very_high
+# - reasoning_strength: none | light | strong | extreme
+# - code_edit_reliability: low | medium | high | specialist
+# - availability: prod | beta | experimental | local
+
+version: 1
+
+providers:
+  - key: openai
+    display_name: OpenAI
+  - key: anthropic
+    display_name: Anthropic
+  - key: google
+    display_name: Google
+  - key: deepseek
+    display_name: DeepSeek
+  - key: qwen
+    display_name: Alibaba Qwen
+  - key: mistral
+    display_name: Mistral
+  - key: meta
+    display_name: Meta
+  - key: morph
+    display_name: Morph LLM
+  - key: xai
+    display_name: xAI
+  - key: local
+    display_name: Local Runtime
+
+models:
+  # Reasoning-heavy
+  - key: openai:gpt-5-reasoning
+    display_name: GPT-5 Reasoning
+    provider: openai
+    model_id: gpt-5-reasoning
+    context_window: 200000
+    cost_band: very_high
+    reasoning_strength: extreme
+    code_edit_reliability: medium
+    availability: prod
+    tags: [reasoning, tool_use]
+
+  - key: anthropic:opus-4.1
+    display_name: Claude Opus 4.1
+    provider: anthropic
+    model_id: claude-4.1-opus
+    context_window: 200000
+    cost_band: very_high
+    reasoning_strength: extreme
+    code_edit_reliability: medium
+    availability: prod
+    tags: [reasoning, tool_use]
+
+  - key: deepseek:v3.1-reasoning
+    display_name: DeepSeek v3.1 Reasoning
+    provider: deepseek
+    model_id: deepseek-v3.1-reasoning
+    context_window: 128000
+    cost_band: high
+    reasoning_strength: strong
+    code_edit_reliability: medium
+    availability: prod
+    tags: [reasoning]
+
+  - key: google:gemini-2.5-pro
+    display_name: Gemini 2.5 Pro
+    provider: google
+    model_id: gemini-2.5-pro
+    context_window: 1000000
+    cost_band: high
+    reasoning_strength: strong
+    code_edit_reliability: medium
+    availability: prod
+    tags: [reasoning, long_context]
+
+  # Balanced generalists
+  - key: openai:gpt-5-medium
+    display_name: GPT-5 Medium
+    provider: openai
+    model_id: gpt-5-medium
+    context_window: 200000
+    cost_band: high
+    reasoning_strength: strong
+    code_edit_reliability: medium
+    availability: prod
+    tags: [general, tool_use]
+
+  - key: anthropic:sonnet-4.1
+    display_name: Claude Sonnet 4.1
+    provider: anthropic
+    model_id: claude-4.1-sonnet
+    context_window: 200000
+    cost_band: high
+    reasoning_strength: strong
+    code_edit_reliability: medium
+    availability: prod
+    tags: [general]
+
+  - key: google:gemini-2.5-flash
+    display_name: Gemini 2.5 Flash
+    provider: google
+    model_id: gemini-2.5-flash
+    context_window: 1000000
+    cost_band: low
+    reasoning_strength: light
+    code_edit_reliability: low
+    availability: prod
+    tags: [fast, low_cost, long_context]
+
+  - key: openai:o4-mini
+    display_name: o4-mini
+    provider: openai
+    model_id: o4-mini
+    context_window: 200000
+    cost_band: medium
+    reasoning_strength: light
+    code_edit_reliability: medium
+    availability: prod
+    tags: [fast, low_cost]
+
+  # Code generation/edit
+  - key: qwen:qwen3-coder
+    display_name: Qwen3 Coder
+    provider: qwen
+    model_id: qwen3-coder
+    context_window: 4500
+    cost_band: low
+    reasoning_strength: light
+    code_edit_reliability: high
+    availability: prod
+    tags: [code]
+
+  - key: deepseek:coder
+    display_name: DeepSeek Coder
+    provider: deepseek
+    model_id: deepseek-coder
+    context_window: 32000
+    cost_band: low
+    reasoning_strength: light
+    code_edit_reliability: high
+    availability: prod
+    tags: [code]
+
+  - key: mistral:large
+    display_name: Mistral Large
+    provider: mistral
+    model_id: mistral-large-latest
+    context_window: 32000
+    cost_band: medium
+    reasoning_strength: light
+    code_edit_reliability: medium
+    availability: prod
+    tags: [code, general]
+
+  - key: meta:llama-3.1-70b-instruct
+    display_name: Llama 3.1 70B Instruct (Hosted)
+    provider: meta
+    model_id: llama-3.1-70b-instruct
+    context_window: 32000
+    cost_band: medium
+    reasoning_strength: light
+    code_edit_reliability: medium
+    availability: prod
+    tags: [code, general]
+
+  # File edit specialist
+  - key: morph:fastapply
+    display_name: Morph FastApply
+    provider: morph
+    model_id: morph-fastapply
+    context_window: 4000
+    cost_band: medium
+    reasoning_strength: none
+    code_edit_reliability: specialist
+    availability: prod
+    tags: [file_edit, patch_application]
+
+  # Long-context specialized
+  - key: openai:gpt-5-long
+    display_name: GPT-5 Long
+    provider: openai
+    model_id: gpt-5-long
+    context_window: 1000000
+    cost_band: very_high
+    reasoning_strength: strong
+    code_edit_reliability: medium
+    availability: prod
+    tags: [long_context]
+
+  - key: meta:llama-3.2-long
+    display_name: Llama 3.2 Long (Hosted)
+    provider: meta
+    model_id: llama-3.2-70b-long
+    context_window: 200000
+    cost_band: medium
+    reasoning_strength: light
+    code_edit_reliability: medium
+    availability: prod
+    tags: [long_context]
+
+  # Free/local
+  - key: local:llama-3.2-instruct
+    display_name: Local Llama 3.2 Instruct
+    provider: local
+    model_id: llama3.2:instruct
+    context_window: 8192
+    cost_band: free
+    reasoning_strength: none
+    code_edit_reliability: low
+    availability: local
+    tags: [free, local]
+
+  - key: local:llama-3.1-8b-instruct
+    display_name: Local Llama 3.1 8B Instruct
+    provider: local
+    model_id: llama3.1:instruct
+    context_window: 8192
+    cost_band: free
+    reasoning_strength: none
+    code_edit_reliability: low
+    availability: local
+    tags: [free, local]
+
+  - key: local:mixtral
+    display_name: Local Mixtral
+    provider: local
+    model_id: mixtral
+    context_window: 8192
+    cost_band: free
+    reasoning_strength: none
+    code_edit_reliability: low
+    availability: local
+    tags: [free, local]
+
+  # Optional/disabled by policy unless explicitly enabled
+  - key: xai:grok-4
+    display_name: Grok 4
+    provider: xai
+    model_id: grok-4
+    context_window: 32768
+    cost_band: high
+    reasoning_strength: light
+    code_edit_reliability: low
+    availability: prod
+    tags: [general]
+
+  - key: xai:grok-4-coder
+    display_name: Grok 4 Coder
+    provider: xai
+    model_id: grok-4-coder
+    context_window: 32768
+    cost_band: high
+    reasoning_strength: light
+    code_edit_reliability: medium
+    availability: prod
+    tags: [code]
+
+routing:
+  defaults_by_task_type:
+    quick_qa: [google:gemini-2.5-flash, openai:o4-mini, openai:gpt-5-medium]
+    complex_reasoning: [openai:gpt-5-reasoning, anthropic:opus-4.1, deepseek:v3.1-reasoning]
+    code_edit: [morph:fastapply, qwen:qwen3-coder, deepseek:coder, mistral:large]
+    long_context: [google:gemini-2.5-pro, openai:gpt-5-long, meta:llama-3.2-long]
+    free_local: [local:llama-3.2-instruct, local:llama-3.1-8b-instruct, local:mixtral]
+    planning: [openai:gpt-5-medium, anthropic:sonnet-4.1, google:gemini-2.5-flash]
+    research_reasoning: [google:gemini-2.5-pro, openai:gpt-5-reasoning, deepseek:v3.1-reasoning]
+    code_generation: [qwen:qwen3-coder, deepseek:coder, openai:o4-mini]
+
+  complexity_thresholds:
+    trivial: minimal
+    simple: minimal
+    moderate: minimal_or_reasoning_when_ambiguity_high
+    complex: reasoning
+    extreme: reasoning_with_guardrails
+
+  selection_strategy:
+    steps:
+      - derive_complexity_tier
+      - choose_minimal_vs_reasoning_class
+      - filter_candidates_by_task_type_and_cost_band
+      - ensure_context_fit_and_availability
+      - apply_provider_policies
+      - apply_caching_and_budget
+      - finalize_with_fallbacks
+    fallbacks:
+      - if primary unavailable: try next candidate in defaults_by_task_type
+      - if none fit context: select closest long_context model, warn
+      - if budget exceeded: downgrade cost_band where accuracy tolerance allows
+
+policies:
+  disabled_models: [xai:grok-4, xai:grok-4-coder]
+  preferred_file_edit_tool: morph:fastapply
+  ts_executor_wrappers:
+    required_for_providers: [google]  # enforce typed tool blocks for providers with flaky tool IO
+    optional_for_providers: [openai, anthropic, deepseek, qwen, mistral, meta]
+  budget:
+    default_max_usd_per_task: 2.50
+    max_usd_per_task_by_tier:
+      trivial: 0.03
+      simple: 0.10
+      moderate: 0.50
+      complex: 2.50
+      extreme: 6.00
+  rate_limits:
+    provider_max_qps:
+      openai: 5
+      anthropic: 3
+      google: 5
+      deepseek: 5
+      qwen: 8
+      mistral: 5
+      meta: 5
+      morph: 3
+      xai: 1
+      local: 20
+
+caching:
+  enabled: true
+  redis_namespace: prompt_cache
+  key_template: "pc:{project}:{model_class}:{template_hash}:{inputs_hash}:{tools_hash}"
+  ttls_seconds:
+    quick_qa: 86400       # 24h
+    code_edit: 600        # 10m (edits go stale quickly)
+    research: 21600       # 6h
+    planning: 7200        # 2h
+    long_context: 10800   # 3h
+    default: 3600
+
+# Caching policy
+caching:
+  enabled: true
+  ttls_seconds:
+    router_default: 3600
+    generation_default: 3600
+
+# Routing defaults by task type
+routing:
+  defaults_by_task_type:
+    quick_qa:
+      - google:gemini-2.5-flash
+      - openai:o4-mini
+      - anthropic:sonnet-4.1
+    complex_reasoning:
+      - openai:gpt-5-reasoning
+      - anthropic:opus-4.1
+      - google:gemini-2.5-pro
+    code_edit:
+      - morph:fastapply
+      - qwen:qwen3-coder
+      - deepseek:coder
+    long_context:
+      - google:gemini-2.5-pro
+      - openai:gpt-5-long
+      - meta:llama-3.2-long
+
+# Policies
+policies:
+  disabled_models: []
+  budget:
+    prefer_cheap_until: simple
+    max_cost_band: very_high
+  safety:
+    require_approval_for_privileged: true
+
+  semantic_near_match:
+    enabled: false        # enable later with embeddings + guardrails
+    threshold: 0.92
+
+complexity_engine:
+  weights:
+    code_impact: 3
+    ambiguity: 3
+    safety: 4
+    history: 2
+    size: 2
+    coordination: 2
+  thresholds:
+    trivial: 0-4
+    simple: 5-8
+    moderate: 9-13
+    complex: 14-18
+    extreme: 19-100
+  outputs:
+    require_tests_for_tiers: [moderate, complex, extreme]
+    require_review_for_tiers: [complex, extreme]
+    prefer_reasoning_for_tiers: [complex, extreme]
+
+notes:
+  - Verify model IDs with active providers at runtime; this file encodes intent and policy.
+  - Maintain total catalog <= 30 models; prune periodically based on performance/cost.
+  - Grok models are disabled by default; enable per-project if needed.
+  - Morph FastApply prioritized for file edits; fallback to code LLM + AST patcher when unavailable.
+

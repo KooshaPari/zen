@@ -1,0 +1,214 @@
+# NATS Configuration Example for Zen MCP Server
+# This file provides a comprehensive example of NATS configuration
+# for different deployment scenarios and environments
+
+# Basic Server Configuration
+server_name: "zen-nats-server"
+client_host: "0.0.0.0"
+client_port: 4222
+environment: "development"  # development, staging, production
+
+# NATS Server URLs (for client connections)
+servers:
+  - url: "nats://localhost:4222"
+    weight: 100
+    max_reconnect_attempts: -1
+    reconnect_wait: 2.0
+    # Authentication (uncomment as needed)
+    # username: "nats_user"
+    # password: "nats_password" 
+    # token: "your_token_here"
+    # nkey_file: "/path/to/nkey.nk"
+    # jwt_file: "/path/to/jwt.jwt"
+    # TLS settings
+    # tls_cert: "/path/to/cert.pem"
+    # tls_key: "/path/to/key.pem"
+    # tls_ca: "/path/to/ca.pem"
+    # tls_verify: true
+
+# JetStream Configuration (Persistent Messaging)
+jetstream:
+  enabled: true
+  domain: null  # Optional JetStream domain
+  max_memory: 1073741824  # 1GB in bytes
+  max_storage: 10737418240  # 10GB in bytes
+  max_streams: 1000
+  max_consumers: 10000
+  store_dir: "./jetstream"  # Directory for file storage
+  cluster_replicas: 1  # Number of replicas (increase for production)
+  sync_interval: 2.0
+  sync_always: false
+  compress: true
+
+# Cluster Configuration (Multi-Node Setup)
+cluster:
+  enabled: false  # Set to true for multi-node deployments
+  name: "zen-nats-cluster"
+  listen_host: "0.0.0.0"
+  listen_port: 6222
+  routes: []  # List of other cluster member URLs
+    # - "nats://node2:6222"
+    # - "nats://node3:6222"
+  connect_retries: 5
+  # Cluster authentication
+  # username: "cluster_user"
+  # password: "cluster_password"
+
+# Leaf Node Configuration (Edge Computing)
+leafnode:
+  enabled: false  # Set to true for edge deployments
+  listen_host: "0.0.0.0"
+  listen_port: 7422
+  remotes: []  # Remote hub connections for edge nodes
+    # - url: "nats://hub.example.com:7422"
+    #   username: "leaf_user"
+    #   password: "leaf_password"
+  reconnect_delay: 1.0
+  # Hub configuration for spoke-hub topology
+  hub_config: null
+
+# Security Configuration
+security:
+  # User-based authentication
+  users: []
+    # - username: "admin"
+    #   password: "admin_password"
+    #   permissions:
+    #     publish: ["admin.>", "agents.>"]
+    #     subscribe: ["admin.>", "agents.>", "system.>"]
+    # - username: "agent"
+    #   password: "agent_password"
+    #   permissions:
+    #     publish: ["agents.commands.*", "agents.responses.*"]
+    #     subscribe: ["agents.commands.*", "system.status"]
+
+  # Account-based multi-tenancy
+  accounts: []
+    # - name: "production"
+    #   users:
+    #     - username: "prod_user"
+    #       password: "prod_password"
+    #   imports: []
+    #   exports: []
+
+  # JWT/NKey authentication (for production)
+  operator_jwt: null  # Path to operator JWT file
+  system_account: null  # System account name
+
+  # Authorization settings
+  authorization: {}
+
+  # TLS Configuration
+  tls_config: 
+    # cert_file: "/path/to/server-cert.pem"
+    # key_file: "/path/to/server-key.pem" 
+    # ca_file: "/path/to/ca-cert.pem"
+    verify: false  # Set to true for production
+
+  # Connection type restrictions
+  allowed_connection_types:
+    - "STANDARD"
+    - "WEBSOCKET"
+    - "LEAFNODE"
+    - "MQTT"
+
+# Monitoring and Metrics
+monitoring:
+  monitor_host: "0.0.0.0"
+  monitor_port: 8222
+  enable_metrics: true
+  metrics_interval: 30
+  health_check_interval: 10
+  log_file: null  # Path to log file (null = stdout)
+  log_level: "info"  # debug, info, warn, error
+  log_time: true
+  debug: false
+  trace: false
+  profile_port: null  # HTTP profiling port (for development)
+
+# Performance Tuning
+performance:
+  max_connections: 65536
+  max_subscriptions: 0  # 0 = unlimited
+  max_payload: 1048576  # 1MB in bytes
+  max_pending: 268435456  # 256MB in bytes
+  max_control_line: 4096
+  ping_interval: 120  # seconds
+  ping_max: 2  # maximum missed pings
+  write_deadline: "10s"
+  max_closed_clients: 10000
+  disable_short_first_ping: false
+  slow_consumer_threshold: "1GB"
+  rate_limit: null  # bytes per second rate limit
+
+# Client-Specific Configuration
+client_config:
+  # Additional options for NATS clients
+  flusher_queue_size: 1024
+  reconnect_buf_size: 8388608  # 8MB
+  max_reconnect_attempts: -1
+  reconnect_time_wait: 2.0
+  ping_interval: 30
+  max_outstanding_pings: 2
+
+# Environment-Specific Overrides
+# These settings will be applied based on the 'environment' field above
+
+# Development Environment (default)
+development_overrides:
+  jetstream:
+    max_memory: 536870912  # 512MB
+    max_storage: 5368709120  # 5GB
+    cluster_replicas: 1
+  monitoring:
+    log_level: "debug"
+    debug: true
+  performance:
+    max_connections: 1000
+    ping_interval: 120
+  security:
+    tls_config:
+      verify: false
+
+# Production Environment
+production_overrides:
+  jetstream:
+    max_memory: 4294967296  # 4GB
+    max_storage: 107374182400  # 100GB
+    cluster_replicas: 3
+    compress: true
+  cluster:
+    enabled: true
+  monitoring:
+    log_level: "warn"
+    debug: false
+    trace: false
+    enable_metrics: true
+  performance:
+    max_connections: 100000
+    max_payload: 2097152  # 2MB
+    max_pending: 1073741824  # 1GB
+    ping_interval: 60
+    write_deadline: "5s"
+  security:
+    tls_config:
+      verify: true
+
+# Staging Environment  
+staging_overrides:
+  jetstream:
+    max_memory: 2147483648  # 2GB
+    max_storage: 21474836480  # 20GB
+    cluster_replicas: 2
+  cluster:
+    enabled: false
+  monitoring:
+    log_level: "info"
+    debug: false
+    enable_metrics: true
+  performance:
+    max_connections: 10000
+    ping_interval: 90
+  security:
+    tls_config:
+      verify: true

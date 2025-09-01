@@ -159,6 +159,10 @@ class ModelCapabilities:
     # Thinking mode support (for models with thinking capabilities)
     max_thinking_tokens: int = 0  # Maximum thinking tokens for extended reasoning models
 
+    # Estimated pricing (per 1K tokens) — optional, provider-specific
+    input_cost_per_1k: float | None = None
+    output_cost_per_1k: float | None = None
+
     # Custom model flag (for models that only work with custom endpoints)
     is_custom: bool = False  # Whether this model requires custom API endpoints
 

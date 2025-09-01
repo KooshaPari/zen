@@ -9,7 +9,21 @@ dependencies = [
     "openai>=1.55.2",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
+    "aiohttp>=3.9.0",
+    "redis>=5.0.0",
+    # Optional Temporal workflow orchestration dependencies
+    "temporalio>=1.0.0; extra == 'temporal'",
+    # Optional NATS messaging dependencies  
+    "nats-py>=2.0.0; extra == 'nats'",
+    # Optional Kafka event streaming dependencies
+    "aiokafka>=0.8.0; extra == 'kafka'",
 ]
+
+[project.optional-dependencies]
+temporal = ["temporalio>=1.0.0"]
+nats = ["nats-py>=2.0.0"] 
+kafka = ["aiokafka>=0.8.0"]
+workflows = ["temporalio>=1.0.0", "nats-py>=2.0.0", "aiokafka>=0.8.0"]
 
 [tool.setuptools.packages.find]
 include = ["tools*", "providers*", "systemprompts*", "utils*", "conf*"]

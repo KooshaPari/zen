@@ -1,0 +1,22 @@
+# LangGraph dependencies for Aegis provider
+# Install with: pip install -r requirements-langgraph.txt
+
+# Core LangGraph
+langgraph>=0.0.30
+langchain>=0.1.0
+langchain-core>=0.1.0
+
+# Optional LangGraph integrations
+langchain-openai>=0.0.5  # For OpenAI models in workflows
+langchain-anthropic>=0.1.0  # For Anthropic models in workflows
+langchain-google-genai>=0.0.5  # For Google models in workflows
+
+# State persistence (optional)
+langchain-redis>=0.0.1  # For Redis-based state storage
+
+# Observability (optional)  
+langsmith>=0.0.50  # For workflow monitoring and debugging
+
+# Additional utilities
+pydantic>=2.0.0  # Already in main requirements, but ensure compatibility
+typing-extensions>=4.5.0  # For advanced type hints

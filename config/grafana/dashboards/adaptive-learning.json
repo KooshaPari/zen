@@ -1,0 +1,144 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Zen MCP Adaptive Learning Dashboard",
+    "tags": ["zen-mcp", "adaptive-learning", "performance"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Model Selection Distribution",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT model_name, COUNT(*) as count FROM zen_performance.model_performance WHERE created_at > NOW() - INTERVAL '1 hour' GROUP BY model_name",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Token Usage Over Time",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT date_trunc('minute', created_at) as time, SUM(total_tokens) as tokens FROM zen_performance.model_performance WHERE created_at > NOW() - INTERVAL '1 hour' GROUP BY time ORDER BY time",
+            "format": "time_series"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Average Latency by Model",
+        "type": "bargauge",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT model_name, AVG(total_time * 1000) as avg_latency_ms FROM zen_performance.model_performance WHERE created_at > NOW() - INTERVAL '1 hour' GROUP BY model_name",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Cost per Request",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT AVG(total_cost) as avg_cost FROM zen_performance.model_performance WHERE created_at > NOW() - INTERVAL '1 hour'",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Success Rate",
+        "type": "gauge",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT (SUM(CASE WHEN success THEN 1 ELSE 0 END)::FLOAT / COUNT(*)) * 100 as success_rate FROM zen_performance.model_performance WHERE created_at > NOW() - INTERVAL '1 hour'",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Prediction Accuracy",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT date_trunc('minute', p.created_at) as time, AVG(ABS(p.predicted_latency_ms - a.actual_latency_ms) / a.actual_latency_ms) * 100 as error_pct FROM zen_adaptive.predictions p JOIN zen_adaptive.actual_performance a ON p.request_id = a.request_id WHERE p.created_at > NOW() - INTERVAL '1 hour' GROUP BY time ORDER BY time",
+            "format": "time_series"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Budget Utilization",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 12},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT (daily_tokens_used::FLOAT / NULLIF(daily_limit, 0)) * 100 as utilization FROM zen_budget.token_budgets WHERE budget_type = 'global' LIMIT 1",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Active Conversations",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 12},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT COUNT(*) as active_conversations FROM zen_conversation.conversations WHERE is_active = true AND last_activity > NOW() - INTERVAL '1 hour'",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Token Distribution by Task Type",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT task_type, SUM(total_tokens) as tokens FROM zen_performance.model_performance WHERE created_at > NOW() - INTERVAL '1 hour' GROUP BY task_type",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Real-time Requests",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+        "targets": [
+          {
+            "datasource": "PostgreSQL",
+            "rawSql": "SELECT created_at, model_name, task_type, input_tokens + output_tokens as total_tokens, total_time * 1000 as latency_ms, total_cost, success FROM zen_performance.model_performance ORDER BY created_at DESC LIMIT 20",
+            "format": "table"
+          }
+        ]
+      }
+    ]
+  },
+  "overwrite": true
+}

@@ -118,6 +118,12 @@ class DocgenRequest(WorkflowRequest):
         True, description=DOCGEN_FIELD_DESCRIPTIONS["comments_on_complex_logic"]
     )
 
+    def get_annotations(self):
+        return {
+            "category": "documentation",
+            "tags": ["docgen", "documentation", "workflow"],
+            "readOnlyHint": True,
+        }
 
 class DocgenTool(WorkflowTool):
     """

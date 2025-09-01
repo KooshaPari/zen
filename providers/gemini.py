@@ -8,8 +8,15 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from tools.models import ToolModelCategory
 
-from google import genai
-from google.genai import types
+# Optional google-genai dependency; allow import without it for test environments
+try:  # pragma: no cover
+    from google import genai  # type: ignore
+    from google.genai import types  # type: ignore
+    _HAS_GOOGLE_GENAI = True
+except Exception:  # pragma: no cover
+    genai = None  # type: ignore
+    types = None  # type: ignore
+    _HAS_GOOGLE_GENAI = False
 
 from .base import ModelCapabilities, ModelProvider, ModelResponse, ProviderType, create_temperature_constraint
 
@@ -126,6 +133,8 @@ class GeminiModelProvider(ModelProvider):
     def client(self):
         """Lazy initialization of Gemini client."""
         if self._client is None:
+            if not _HAS_GOOGLE_GENAI:
+                raise ImportError("google-genai SDK not installed: pip install google-genai")
             self._client = genai.Client(api_key=self.api_key)
         return self._client
 

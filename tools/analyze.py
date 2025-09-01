@@ -138,6 +138,12 @@ class AnalyzeWorkflowRequest(WorkflowRequest):
 
 
 class AnalyzeTool(WorkflowTool):
+    def get_annotations(self):
+        return {
+            "category": "analysis",
+            "tags": ["analyze", "workflow", "code"],
+            "readOnlyHint": True,
+        }
     """
     Analyze workflow tool for step-by-step code analysis and expert validation.
 

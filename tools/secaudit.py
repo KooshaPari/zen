@@ -152,6 +152,12 @@ class SecauditRequest(WorkflowRequest):
 
 
 class SecauditTool(WorkflowTool):
+    def get_annotations(self):
+        return {
+            "category": "security",
+            "tags": ["security", "owasp", "workflow"],
+            "readOnlyHint": True,
+        }
     """
     Comprehensive security audit workflow tool.
 

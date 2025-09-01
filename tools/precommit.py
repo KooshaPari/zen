@@ -118,6 +118,12 @@ class PrecommitRequest(WorkflowRequest):
 
     # Override inherited fields to exclude them from schema (except model which needs to be available)
     temperature: Optional[float] = Field(default=None, exclude=True)
+    def get_annotations(self):
+        return {
+            "category": "code-quality",
+            "tags": ["precommit", "validation", "workflow"],
+            "readOnlyHint": True,
+        }
     thinking_mode: Optional[str] = Field(default=None, exclude=True)
     use_websearch: Optional[bool] = Field(default=None, exclude=True)
 
@@ -187,7 +193,7 @@ class PrecommitTool(WorkflowTool):
             },
             "total_steps": {
                 "type": "integer",
-                "minimum": 3,
+                "minimum": 1,
                 "description": PRECOMMIT_WORKFLOW_FIELD_DESCRIPTIONS["total_steps"],
             },
             "next_step_required": {
